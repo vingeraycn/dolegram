@@ -52,7 +52,7 @@ Starting the service enables outbound callback delivery for already stored subsc
 
 ## 4. Deployment and connection require a separate approved plan
 
-Sites is the preferred product hosting path to investigate; a paid external service is not the default. Read [SITES_FEASIBILITY.md](SITES_FEASIBILITY.md) for verified capabilities and the concrete callback transport, ingress and durable retry gaps. The standalone Node service is locally validated, while a Sites adapter remains incomplete.
+Sites is the preferred product hosting path to investigate; a paid external service is not the default. Read [SITES_FEASIBILITY.md](SITES_FEASIBILITY.md) for verified capabilities and the concrete callback transport, ingress and durable retry gaps. The standalone Node service and source-only Sites adapter are locally validated with mocks. The Sites production callback transport remains deliberately disabled pending the official trust/egress contract.
 
 **This repository has no automated deployment or webhook configuration command. Do not invent one.** The Agent may prepare a concrete plan, but must obtain explicit user approval before changing hosting, networking, persistent permissions, Bot configuration, webhook destinations, or plugin installation.
 
@@ -64,7 +64,7 @@ A future deployment needs all of the following, validated for its chosen host:
 - A plugin exposing the HTTPS `/mcp` endpoint with supported bearer authentication. This repository has not validated the host's registration or secure secret-entry workflow. If the host cannot support it, report the integration gap; do not expose an unauthenticated MCP endpoint.
 - Explicit host approval to install/connect the plugin and subscribe a Dot to `telegram.message.received`, filtered to the allowed private chat ID.
 
-The current service is standalone Node, not a ready-to-publish Sites Worker. A Sites adapter would need verified durable storage, inbound webhook routing, authenticated user mapping, and equivalent callback SSRF protections. Sites publication provisions its corresponding App/plugin; do not create duplicate plugins when using that future path. No Sites adapter or deployment has been tested here.
+The default startup command runs standalone Node. A separate Sites Worker/D1 adapter, SQL migration, fixed-origin policy, atomic reply claims and owner-only retry tool are implemented; see [sites/README.md](sites/README.md). `npm run build:sites` builds its source artifact. Its production callback origin list and transport are intentionally absent, so subscriptions fail closed and webhook intake returns 503. No live Sites or D1 deployment has been tested. Sites publication provisions its corresponding App/plugin; do not create duplicate plugins. A later approved native Sites cloud task can call the retry tool; no task has been created here.
 
 See [PLUGIN.md](PLUGIN.md) for the verified portable plugin format, bearer-auth declaration, package preparation command, and the separate host installation and subscription steps.
 

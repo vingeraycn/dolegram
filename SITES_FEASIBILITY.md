@@ -19,7 +19,7 @@ However, the current Node implementation cannot simply be published as a Site. A
 | MCP tools and plugin | A Site can expose `POST /mcp`; publishing with MCP support provisions its corresponding App/plugin. Reuse that identity, not an additional standalone wrapper. |
 | MCP Events | The official protocol defines discovery, subscription, callback verification and signed HTTPS delivery. The Site must implement the same contract. Tool support alone does not demonstrate event delivery support. |
 | HTTPS callback transport | HTTPS requests are supported. Connection-time DNS validation and pinning, preserving TLS hostname validation, are not currently implemented through a verified Sites-supported transport. See the concrete compatibility gap below. |
-| Durable retries | A D1 outbox is feasible, but a process-local `setInterval` is not a durable Worker scheduler. A supported retry wake-up mechanism and cross-invocation concurrency controls must be established. Generic Workers Queues or Durable Objects are not automatically available as Sites bindings. |
+| Durable retries | Implemented D1 outbox deadlines, leases and attempt counts. The owner-only `flush_event_deliveries` tool is available for the documented native Sites cloud task workflow. No schedule has been created or live task access tested; no generic Workers Queue binding is assumed. |
 
 Sources for the platform capabilities: [Sites overview](https://learn.chatgpt.com/docs/sites), [data and connections](https://learn.chatgpt.com/docs/sites/data-and-connections), and [hosting a plugin with Sites](https://help.openai.com/en/articles/20001547-hosting-a-plugin-with-chatgpt-sites). Internal official Sites skill references checked: `references/identity-and-secrets.md`, `references/storage.md`, `references/site-mcp-server.md`, and the Worker ESM starter README.
 
@@ -42,18 +42,19 @@ The next capability to establish is an official Sites-supported HTTP transport o
 
 Worker invocations can run concurrently and be replaced. Replace synchronous local SQLite and the process-wide promise queue with D1 constraints, atomic update acceptance and compare-and-set reply claims. Persist pending external writes before calling Telegram; recover an interrupted claim as uncertain rather than sending a duplicate message.
 
-For event retries, an in-memory timer or unawaited promise is insufficient. Cloudflare documents a [30-second post-invocation limit for `waitUntil`](https://developers.cloudflare.com/workers/runtime-apis/context/). This does not establish long-lived retry scheduling. Possible request-driven retry designs must be checked against actual webhook acknowledgement and retry semantics; do not claim that Telegram guarantees an independent scheduler for the Site. No compatible Sites scheduler/queue binding has been verified for the current retry policy.
+For event retries, an in-memory timer or unawaited promise is insufficient. Cloudflare documents a [30-second post-invocation limit for `waitUntil`](https://developers.cloudflare.com/workers/runtime-apis/context/). This does not establish long-lived retry scheduling. Possible request-driven retry designs must be checked against actual webhook acknowledgement and retry semantics; do not claim that Telegram guarantees an independent scheduler for the Site. The native Sites recurring-update reference and `create_schedule` tool document a cloud task calling the Site MCP writer. The adapter now exposes an owner-only drain tool for that path. A later approved hourly recovery task can respect persisted earliest retry deadlines, with latency until its next actual run; it does not promise precise dispatch or a scheduling SLA. No task was created.
 
-## Minimum source-only work once those capabilities are established
+## Source-only implementation delivered
 
-1. Add a Worker handler for webhook and MCP routing with owner authorization supplied by the Sites dispatch identity. Anonymous callers must never read messages or invoke tools.
-2. Add schema-only D1 migrations, owner-bound records, idempotency keys and atomic reply claims; test concurrent Worker invocations and restart recovery with synthetic data.
-3. Port signing to a Worker-compatible library or Web Crypto without altering the published Standard Webhooks format.
-4. Supply the verified callback transport and retry mechanism, and test private/mixed DNS answers, rebinding, redirects, expiration and key rotation.
-5. Prepare Sites hosting metadata without inventing a project ID. Only after source checks and explicit publication/secret/access approval should the Site be created and published. Use the plugin created by Sites.
+1. `src/sites/worker.mjs` routes MCP and webhook requests, checks the Site-scoped owner identity and webhook secret, and defaults to rejecting unverified event delivery.
+2. `sites/migrations/0001_bridge.sql` and `src/sites/d1-store.mjs` provide owner-bound records, atomic update/outbox acceptance, reply claims and delivery leases. SQL-backed mocks cover concurrent requests and restart safety.
+3. `src/sites/callbacks.mjs` signs the official Standard Webhooks payload and implements exact HTTPS origin checks. Its default origins/transport are empty; test hosts are synthetic.
+4. `flush_event_deliveries` supplies the persisted retry drain for the official Sites scheduled-task path. It uses no `waitUntil` or local timer as a durability guarantee.
+5. `npm run build:sites` builds a bundled Worker source artifact without inventing a Site project ID, configuring access or publishing.
 
+The fixed-host investigation found no published production MCP event callback hostname list or documented allowance to replace connection-time checks with only an origin allowlist. OAuth redirect hostnames are unrelated evidence. Thus the sole unresolved platform security contract is a supported safe callback egress path or an explicitly documented trusted-host alternative. The default adapter fails closed until that is established.
 Other installers would deploy their own copy and configure their own Bot securely. Sharing a private repository does not install or share the owner's personal Site plugin.
 
 ## Current boundary
 
-No Sites adapter is claimed complete. Node mock tests remain valid for the standalone implementation but do not demonstrate Worker compatibility, dispatch ingress, D1 behavior or live Dot execution. Preserve the existing Bot consumer until the new Site endpoint, plugin and subscription are verified and the separately approved cutover can be rolled back.
+The source-only Sites adapter is implemented and bundled, but no complete live Sites connection is claimed. Mock SQL tests do not demonstrate hosted D1, dispatch ingress, callback egress or live Dot execution. Preserve the existing Bot consumer until the new Site endpoint, plugin and subscription are verified and the separately approved cutover can be rolled back.

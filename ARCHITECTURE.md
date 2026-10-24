@@ -17,7 +17,7 @@ The signing secret is validated as a `whsec_` value with 24-64 decoded bytes. Re
 - `telegram.mjs`: only formal `sendMessage` and `editMessageText` writes. No credential-bearing errors or upstream descriptions escape this boundary.
 - `server.mjs`: loopback HTTP server, bearer authentication, bounded input, serialized operations and a single-process runtime lock. Arbitrary Sites identity headers are not trusted by this standalone server.
 
-The standalone design avoids assuming that Sites Workers support the required inbound Telegram webhook and DNS pinning APIs. A future Sites adapter must prove those properties before publication. No hosting manifest is included because no Site has been created for this reimplementation.
+The standalone design avoids assuming that Sites Workers support the required inbound Telegram webhook and DNS pinning APIs. The separate source-only Sites adapter uses D1 atomic batches, owner-bound identity, exact-origin callback validation and an explicit retry tool for the documented native Sites task workflow. It refuses production subscription delivery until a verified callback transport is provided; fixed-origin policy alone is not claimed as a protocol exemption. No hosting manifest is included because no Site has been created for this reimplementation.
 
 ## Reply invariants and failure behavior
 
@@ -34,3 +34,7 @@ Mock tests cover lifecycle, signatures, rotation, allowlists, duplicate/replayed
 No real Telegram calls, callback delivery to ChatGPT, Dot runs, TLS reverse proxy deployment, Sites publication or secure host registration have been tested. Production DNS/TLS behavior and Telegram rate limits need integration acceptance in a separately approved independent environment. Runtime retention and uncertain-write reconciliation currently require explicit operator work.
 
 Sources: [MCP Events](https://developers.openai.com/plugins/build/mcp-events), [Telegram Bot API](https://core.telegram.org/bots/api), [Sites plugin hosting](https://help.openai.com/en/articles/20001547-hosting-a-plugin-with-chatgpt-sites).
+
+## Sites adapter source
+
+The modules under `src/sites/` isolate D1 state and Worker routing from the Node filesystem/server implementation. SQL constraints and atomic claims replace a process-wide queue. A message and its outbox are committed together, reply claims are not automatically reclaimed after a crash, and event leases are reclaimable with stable event IDs. The fifth maintenance tool, `flush_event_deliveries`, is owner-only and is designed for an approved native Sites cloud task, not an assumed Workers Queue binding. No in-memory timer or waitUntil is used for persistent recovery. See sites/README.md for the implemented code and remaining callback transport gate.

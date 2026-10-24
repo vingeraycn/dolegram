@@ -10,7 +10,8 @@
     "start": "node src/server.mjs",
     "test": "node --test",
     "check": "tsc --noEmit && eslint .",
-    "configure": "python3 scripts/configure.py"
+    "configure": "python3 scripts/configure.py",
+    "build:sites": "node scripts/build-sites.mjs"
   },
   "dependencies": {
     "ipaddr.js": "2.2.0",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "22.20.5",
+    "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "typescript": "7.0.2"
   }

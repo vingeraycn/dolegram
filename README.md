@@ -2,7 +2,7 @@
 
 A new implementation of a private Telegram Bot to Dot bridge using official MCP Events. This is **not recovered original plugin source**.
 
-Local mock tests and static checks are available. **No deployment, real Bot connection, or end-to-end Dot subscription has been validated.** The existing running plugin remains separate and unchanged.
+Standalone Node and source-only Sites/D1 adapters are included. The Sites production entry intentionally refuses unverified callback delivery. Local mock tests and static checks are available. **No deployment, real Bot connection, or end-to-end Dot subscription has been validated.** The existing running plugin remains separate and unchanged.
 
 ## Give this sentence to your Agent
 
@@ -32,4 +32,4 @@ The tests use synthetic fixtures and mocked Telegram/callback transports. One HT
 - Maximum reply size is 4096 UTF-16 code units; longer text is rejected rather than silently truncated or split into extra messages.
 - A timed-out or interrupted Telegram write is blocked as uncertain, preventing automatic duplicate sends. Operator reconciliation is required.
 
-See [INSTALL.md](INSTALL.md), [Sites feasibility](SITES_FEASIBILITY.md), [plugin packaging](PLUGIN.md), [implementation decisions](ARCHITECTURE.md), and [provenance](SOURCE_STATUS.md).
+See [INSTALL.md](INSTALL.md), [Sites adapter and native retry workflow](sites/README.md), [Sites feasibility](SITES_FEASIBILITY.md), [plugin packaging](PLUGIN.md), [implementation decisions](ARCHITECTURE.md), and [provenance](SOURCE_STATUS.md).
