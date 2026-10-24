@@ -1,3 +1,5 @@
+> Superseded as the preferred route by [TUNNEL.md](TUNNEL.md). The public HTTPS procedures below are an unexecuted alternative and require separate approval. Do not start them as part of the Tunnel installation.
+
 # Personal Mac HTTPS test preparation
 
 This is the alternative Node backend path approved for investigation and local testing. No public tunnel, real credential configuration, Bot webhook change or old-consumer stop has been performed. The Sites source adapter remains separate.

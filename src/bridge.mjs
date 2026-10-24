@@ -101,7 +101,11 @@ export class Bridge {
     }
   }
   receive(update, secret) {
-    if (!equalSecret(secret, this.config.telegramWebhookSecret)) throw new RpcFailure(-32001, 'Unauthorized');
+    if (this.config.telegramMode === 'polling' || !equalSecret(secret, this.config.telegramWebhookSecret)) throw new RpcFailure(-32001, 'Unauthorized');
+    return this.acceptTelegramUpdate(update);
+  }
+  // Internal ingestion; external callers must use authenticated receive().
+  acceptTelegramUpdate(update) {
     if (!Number.isSafeInteger(update?.update_id) || update.update_id < 0) invalid();
     const message = update.message;
     if (!message || message.chat?.type !== 'private' || message.from?.is_bot !== false || !Number.isSafeInteger(message.chat.id) || String(message.from.id) !== String(message.chat.id) || !this.allowed(String(message.chat.id))) return { ignored: true };

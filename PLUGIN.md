@@ -1,3 +1,5 @@
+> Preferred private Mac installation: follow [TUNNEL.md](TUNNEL.md), using the official Tunnel connection workflow. The HTTPS package helper below is for a separately chosen public endpoint; it neither provisions a Tunnel nor installs a private Tunnel plugin.
+
 # ChatGPT plugin packaging and connection
 
 The backend alone is not a completed cloud plugin installation. Hosting, account plugin creation, secure host credential entry, and a Dot subscription remain required and untested.

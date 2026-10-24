@@ -20,7 +20,7 @@ Do not overwrite an existing checkout. Required tools: Node.js 22.x (22.13+) or 
 
 Do not ask users to paste tokens, webhook secrets, MCP bearer secrets, or pairing data into chat. Do not read existing credential stores. Do not generate or replace production credentials automatically.
 
-After the user independently chooses a new Bot and provides their own secrets, ask them to run this command themselves in their local interactive terminal:
+After the user independently chooses a Bot and approves local secret configuration (and any existing-consumer handover), ask them to run this command themselves in their local interactive terminal:
 
 ```sh
 npm run configure
@@ -34,11 +34,13 @@ The Python helper hides secret input, refuses noninteractive input and existing 
 | `allowedChatIds` | Explicit positive private chat IDs as strings. Empty or wildcard access is unsupported. |
 | `mcpBearerToken` | User-supplied secret of at least 32 characters protecting every MCP request. |
 | `telegramBotToken` | Token for the independently chosen Bot. |
-| `telegramWebhookSecret` | User-supplied 32-256 character secret using letters, digits, underscore or hyphen. |
+| `telegramMode` | `polling` for the private Tunnel route; `webhook` only for a separately approved public route. |
+| `expectedBotId`, `expectedBotUsername` | Required numeric Bot ID and username without `@` for polling; verified against `getMe`. |
+| `telegramWebhookSecret` | Required only in webhook mode: user-supplied 32-256 character URL-safe secret. |
 
 The MCP Events signing secret is different: the ChatGPT host supplies it during `events/subscribe`. The service stores it privately in SQLite; users do not need to enter it.
 
-For the approved personal-Mac alternative, see [MAC_TEST.md](MAC_TEST.md) for credential-free loopback checks, a proposed temporary HTTPS entry, exact exposure, and separate approval gates.
+For the preferred private Mac route, follow [TUNNEL.md](TUNNEL.md). Telegram intake is disabled by default, allowing a real host MCP Events handshake before consumer handover. Public HTTPS probes in MAC_TEST.md are historical alternatives, not the next step.
 
 ## 3. Optional local service startup
 
@@ -54,21 +56,11 @@ Starting the service enables outbound callback delivery for already stored subsc
 
 ## 4. Deployment and connection require a separate approved plan
 
-Sites is the preferred product hosting path to investigate; a paid external service is not the default. Read [SITES_FEASIBILITY.md](SITES_FEASIBILITY.md) for verified capabilities and the concrete callback transport, ingress and durable retry gaps. The standalone Node service and source-only Sites adapter are locally validated with mocks. The Sites production callback transport remains deliberately disabled pending the official trust/egress contract.
+The preferred private route is [OpenAI Secure MCP Tunnel plus local Telegram long polling](TUNNEL.md). It requires no public webhook or paid hosting. The Agent can prepare and test code automatically, but new Tunnel credentials, organization/workspace association, host installation and actual consumer handover require concrete action-time approval. A ChatGPT host UI step may require the user; do not automate ChatGPT's own UI or promise unattended completion.
 
-**This repository has no automated deployment or webhook configuration command. Do not invent one.** The Agent may prepare a concrete plan, but must obtain explicit user approval before changing hosting, networking, persistent permissions, Bot configuration, webhook destinations, or plugin installation.
+**No automated deployment or webhook configuration command is provided. Do not invent one.** Use the official client help for its installed version, verify loopback MCP readiness with polling disabled, then verify a real Events subscription before stopping the old consumer. TUNNEL.md specifies credential destinations, access scope, activation and rollback. Mock results do not prove live compatibility.
 
-A future deployment needs all of the following, validated for its chosen host:
-
-- A public HTTPS reverse proxy that forwards `/telegram/webhook` unchanged, keeps `/mcp` protected by the configured bearer secret, limits request size, and does not log bodies or authorization headers.
-- Persistent private storage, a single service process, and outbound HTTPS with callback DNS resolution pinned to validated public addresses. The service performs callback verification and never follows redirects.
-- Telegram webhook registration with its `secret_token` set to the independently supplied webhook secret and `allowed_updates` restricted to `message`. Do not run `getUpdates` concurrently. Do not replace an existing production Bot's webhook.
-- A plugin exposing the HTTPS `/mcp` endpoint with supported bearer authentication. This repository has not validated the host's registration or secure secret-entry workflow. If the host cannot support it, report the integration gap; do not expose an unauthenticated MCP endpoint.
-- Explicit host approval to install/connect the plugin and subscribe a Dot to `telegram.message.received`, filtered to the allowed private chat ID.
-
-The default startup command runs standalone Node. A separate Sites Worker/D1 adapter, SQL migration, fixed-origin policy, atomic reply claims and owner-only retry tool are implemented; see [sites/README.md](sites/README.md). `npm run build:sites` builds its source artifact. Its production callback origin list and transport are intentionally absent, so subscriptions fail closed and webhook intake returns 503. No live Sites or D1 deployment has been tested. Sites publication provisions its corresponding App/plugin; do not create duplicate plugins. A later approved native Sites cloud task can call the retry tool; no task has been created here.
-
-See [PLUGIN.md](PLUGIN.md) for the verified portable plugin format, bearer-auth declaration, package preparation command, and the separate host installation and subscription steps.
+For a separately chosen public standalone backend, [PLUGIN.md](PLUGIN.md) covers the portable package template. Its HTTPS endpoint helper does not create a Tunnel connection. The source-only Sites adapter remains an alternative with production callback transport disabled; see [SITES_FEASIBILITY.md](SITES_FEASIBILITY.md).
 
 ## 5. Dot response instruction
 

@@ -38,3 +38,7 @@ Sources: [MCP Events](https://developers.openai.com/plugins/build/mcp-events), [
 ## Sites adapter source
 
 The modules under `src/sites/` isolate D1 state and Worker routing from the Node filesystem/server implementation. SQL constraints and atomic claims replace a process-wide queue. A message and its outbox are committed together, reply claims are not automatically reclaimed after a crash, and event leases are reclaimable with stable event IDs. The fifth maintenance tool, `flush_event_deliveries`, is owner-only and is designed for an approved native Sites cloud task, not an assumed Workers Queue binding. No in-memory timer or waitUntil is used for persistent recovery. See sites/README.md for the implemented code and remaining callback transport gate.
+
+## Private Tunnel and polling route
+
+The preferred private route uses OpenAI Secure MCP Tunnel to reach authenticated loopback MCP, and outbound Telegram long polling for intake. Callback verification and delivery leave the Mac directly through the existing DNS-pinned HTTPS transport. No Telegram public webhook is required. `polling.mjs` verifies Bot identity and empty webhook status, persists owner/Bot-bound offsets after message/outbox acceptance, and stops on conflicts. The process lock does not protect against other applications: operator handover remains required. Polling is off until `DOTG_ENABLE_POLLING=1`; the MCP handshake can be checked first. See TUNNEL.md for official contract references, approval gates and live acceptance boundaries.

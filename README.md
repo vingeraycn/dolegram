@@ -2,7 +2,7 @@
 
 A new implementation of a private Telegram Bot to Dot bridge using official MCP Events. This is **not recovered original plugin source**.
 
-Standalone Node and source-only Sites/D1 adapters are included. The Sites production entry intentionally refuses unverified callback delivery. Local mock tests and static checks are available. **No deployment, real Bot connection, or end-to-end Dot subscription has been validated.** The existing running plugin remains separate and unchanged.
+The preferred private route uses a local Node backend, Telegram long polling and OpenAI Secure MCP Tunnel; it needs no public Telegram webhook. A source-only Sites/D1 alternative is also included. The Sites production entry intentionally refuses unverified callback delivery. Local mock tests and static checks are available. **No deployment, real Bot connection, or end-to-end Dot subscription has been validated.** Existing services remain separate and unchanged.
 
 ## Give this sentence to your Agent
 
@@ -24,7 +24,7 @@ The tests use synthetic fixtures and mocked Telegram/callback transports. One HT
 
 ## Behavior
 
-- Accept allowlisted private text messages through an authenticated Telegram webhook.
+- Accept allowlisted private text messages through opt-in outbound long polling or an authenticated Telegram webhook. Polling is disabled by default and verifies the expected Bot identity; it never changes webhooks.
 - Persist incoming update IDs, subscriptions, delivery retries, and reply state in a private SQLite database.
 - Advertise `telegram.message.received` and the four tools `get_bridge_status`, `read_telegram_message`, `reply_telegram_message`, and `update_telegram_message`.
 - Use the actual MCP Events subscription lifecycle, callback verification and Standard Webhooks signatures. Ordinary MCP notifications are not event delivery.
@@ -32,4 +32,4 @@ The tests use synthetic fixtures and mocked Telegram/callback transports. One HT
 - Maximum reply size is 4096 UTF-16 code units; longer text is rejected rather than silently truncated or split into extra messages.
 - A timed-out or interrupted Telegram write is blocked as uncertain, preventing automatic duplicate sends. Operator reconciliation is required.
 
-See [INSTALL.md](INSTALL.md), [Sites adapter and native retry workflow](sites/README.md), [Sites feasibility](SITES_FEASIBILITY.md), [plugin packaging](PLUGIN.md), [implementation decisions](ARCHITECTURE.md), and [provenance](SOURCE_STATUS.md).
+See [INSTALL.md](INSTALL.md), [private Tunnel setup and live handshake](TUNNEL.md), [Sites adapter and native retry workflow](sites/README.md), [Sites feasibility](SITES_FEASIBILITY.md), [plugin packaging](PLUGIN.md), [implementation decisions](ARCHITECTURE.md), and [provenance](SOURCE_STATUS.md).

@@ -21,3 +21,15 @@ Sites source validation adds SQL-backed D1 binding doubles, exact-origin rejecti
 `npm run build:sites` produces a bundled Worker with no local filesystem, SQLite or DNS runtime dependency. Its only external module is `node:crypto`. The built ESM entry imports successfully under Node 24 and rejects an unconfigured request with HTTP 503. This proves source packaging, not platform callback connectivity or deployment readiness.
 
 Personal-Mac preparation added `npm run verify:local` and a deny-all ingress probe. Both were exercised only on 127.0.0.1:8787 and closed afterward. Recognized unauthenticated POST routes returned 401 and unrelated paths returned 404. No public tunnel, Bot configuration or real credential input was used. The existing installed cloudflared CLI parsed the dedicated empty configuration; its named-ingress validator reported no ingress rules, as expected for a Quick Tunnel using `--url`.
+
+## Private Tunnel and polling implementation check
+
+The updated suite contains 41 tests. On this revision, 35 tests that do not require a listener passed under Node 24.22.1, including polling cursor persistence/reopen, replay deduplication, signed official event-to-reply workflow, identity/webhook refusal, storage failure, private allowlist, conflict refusal and shutdown interruption. The six loopback HTTP tests could not be rerun: sandbox listeners return EPERM, and both the initial elevated test request and its permitted retry expired in automatic approval review before execution. This is an environment permission limitation, not a passing full-suite result. Re-run `npm test` in a terminal permitted to bind loopback before live installation.
+
+The exact isolated subset command was:
+
+```sh
+node --test --test-skip-pattern='^(HTTP authentication|concurrent HTTP|webhook storage|split UTF|isolated HTTP|polling config)'
+```
+
+TypeScript/ESLint and Python configuration-helper syntax checks pass. No live Tunnel, persistent credential configuration, actual Telegram polling, DSH stop or host subscription was performed. TUNNEL.md describes the remaining real handshake and handover gates.
