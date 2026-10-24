@@ -33,3 +33,11 @@ node --test --test-skip-pattern='^(HTTP authentication|concurrent HTTP|webhook s
 ```
 
 TypeScript/ESLint and Python configuration-helper syntax checks pass. No live Tunnel, persistent credential configuration, actual Telegram polling, DSH stop or host subscription was performed. TUNNEL.md describes the remaining real handshake and handover gates.
+
+## Successful full-suite retry
+
+On 2026-10-24, after reconnection and the user's explicit retry instruction, the supported elevated executor ran `npm test` on implementation commit `fb9835adff23c462e432cceef2d9d4ed93fef3b0`. All 41 tests passed, including the six loopback HTTP tests previously blocked by sandbox EPERM. There were no failures or skipped tests. The earlier blocked attempts above are historical; the loopback test limitation is now resolved for this validation run.
+
+`npm run check` also passed on that implementation commit. The 39 tracked files were checked again: no Chinese characters or credential-pattern matches were found; all reachable historical blobs passed the credential-pattern scan. GitHub read-only checks confirmed login `vingeraycn`, repository `vingeraycn/dotg`, private visibility, and the expected pre-push remote main commit `9e608e502eed4348e182a3b65e5969ad73ff0a97`. This documentation update changes no implementation.
+
+These remain isolated mock checks. No real Telegram intake, OpenAI Tunnel, host MCP Events handshake, DSH stop, Hindsight modification or persistent credential configuration was performed. Live acceptance still follows TUNNEL.md.
