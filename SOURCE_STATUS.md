@@ -20,7 +20,7 @@ The user reports that the running plugin previously passed bidirectional testing
 - The supported task reading interface opened the original development conversation, but the creation message contained only a content reference, without source files or card contents.
 - The currently connected Sites account's owned project list did not include the original plugin's project.
 - Plugin Creator returned `NOT_FOUND / Plugin not found` when asked to read files for the original plugin ID. This does not prove that the running plugin is absent; its source is unavailable through the current connection.
-- Current documentation is translated to English in a normal follow-up commit. Existing commit history is retained. The requested rename to `dotg` was blocked by automatic approval review; the original repository name remains in use.
+- Current documentation is translated to English in a normal follow-up commit. Existing commit history is retained. The repository was renamed to `dotg` after explicit user authorization was verified, preserving its private visibility and existing access permissions.
 
 ## Required to complete source distribution
 

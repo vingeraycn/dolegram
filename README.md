@@ -1,4 +1,4 @@
-# Telegram Bot to Dot bridge
+# dotg
 
 Telegram Bot to Dot bridge using MCP Events, with tools to read, reply to, and update Telegram messages.
 
@@ -6,7 +6,7 @@ Telegram Bot to Dot bridge using MCP Events, with tools to read, reply to, and u
 
 ## Give this sentence to your Agent
 
-> Read INSTALL.md in https://github.com/vingeraycn/telegram-dot-plugin, verify source completeness, then follow the documented installation process and guide me through secure interactive configuration; if source code or a supported deployment method is missing, report the blocker, do not invent commands, and do not modify my existing Bot or webhook.
+> Read INSTALL.md in https://github.com/vingeraycn/dotg, verify source completeness, then follow the documented installation process and guide me through secure interactive configuration; if source code or a supported deployment method is missing, report the blocker, do not invent commands, and do not modify my existing Bot or webhook.
 
 This is a private repository. Other users and their Agents need read access granted by the owner. Do not make the repository public to enable installation.
 
