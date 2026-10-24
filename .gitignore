@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.DS_Store
+*.log
+*.pem
+*.key
+credentials*
+secrets*
+config.local.*
+runtime/
+data/
+sessions/
+pairing/
