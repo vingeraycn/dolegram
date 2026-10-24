@@ -38,6 +38,8 @@ The Python helper hides secret input, refuses noninteractive input and existing 
 
 The MCP Events signing secret is different: the ChatGPT host supplies it during `events/subscribe`. The service stores it privately in SQLite; users do not need to enter it.
 
+For the approved personal-Mac alternative, see [MAC_TEST.md](MAC_TEST.md) for credential-free loopback checks, a proposed temporary HTTPS entry, exact exposure, and separate approval gates.
+
 ## 3. Optional local service startup
 
 Only after secure local configuration, the supported startup command is:

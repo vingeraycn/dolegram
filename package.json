@@ -11,7 +11,9 @@
     "test": "node --test",
     "check": "tsc --noEmit && eslint .",
     "configure": "python3 scripts/configure.py",
-    "build:sites": "node scripts/build-sites.mjs"
+    "build:sites": "node scripts/build-sites.mjs",
+    "verify:local": "node scripts/verify-local.mjs",
+    "probe:local": "node scripts/probe-server.mjs"
   },
   "dependencies": {
     "ipaddr.js": "2.2.0",
