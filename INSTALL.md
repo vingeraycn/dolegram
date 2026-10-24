@@ -52,6 +52,8 @@ Starting the service enables outbound callback delivery for already stored subsc
 
 ## 4. Deployment and connection require a separate approved plan
 
+Sites is the preferred product hosting path to investigate; a paid external service is not the default. Read [SITES_FEASIBILITY.md](SITES_FEASIBILITY.md) for verified capabilities and the concrete callback transport, ingress and durable retry gaps. The standalone Node service is locally validated, while a Sites adapter remains incomplete.
+
 **This repository has no automated deployment or webhook configuration command. Do not invent one.** The Agent may prepare a concrete plan, but must obtain explicit user approval before changing hosting, networking, persistent permissions, Bot configuration, webhook destinations, or plugin installation.
 
 A future deployment needs all of the following, validated for its chosen host:

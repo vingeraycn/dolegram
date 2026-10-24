@@ -32,4 +32,4 @@ The tests use synthetic fixtures and mocked Telegram/callback transports. One HT
 - Maximum reply size is 4096 UTF-16 code units; longer text is rejected rather than silently truncated or split into extra messages.
 - A timed-out or interrupted Telegram write is blocked as uncertain, preventing automatic duplicate sends. Operator reconciliation is required.
 
-See [INSTALL.md](INSTALL.md), [plugin packaging](PLUGIN.md), [implementation decisions](ARCHITECTURE.md), and [provenance](SOURCE_STATUS.md).
+See [INSTALL.md](INSTALL.md), [Sites feasibility](SITES_FEASIBILITY.md), [plugin packaging](PLUGIN.md), [implementation decisions](ARCHITECTURE.md), and [provenance](SOURCE_STATUS.md).
