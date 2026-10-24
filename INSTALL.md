@@ -1,35 +1,35 @@
-# Agent 安装与交互式配置指南
+# Agent installation and interactive configuration guide
 
-## 当前阻碍
+## Current blocker
 
-此版本没有原插件源码、依赖清单、部署入口或配置字段定义。**现在必须停在源码完整性检查；不得声称安装成功。** 下述内容是恢复源码后的执行约定，不是已经验证可用的部署流程。
+This version lacks the original plugin source, dependency manifest, deployment entry point, and configuration schema. **Stop at the source completeness check. Do not report installation success.** The steps below define the process to follow after source recovery; they are not a verified deployment procedure.
 
-## 可以自动执行
+## Steps the Agent can perform automatically
 
-1. 检查 Agent 是否有本私有仓库的读取权限；权限不足时由所有者授予读取权限。
-2. 克隆或读取仓库，检查现有文件与历史，不覆盖用户已有工作。
-3. 检查源码、锁文件、运行环境要求、测试和实际支持的部署入口是否齐全。缺失时报告准确的文件或能力缺口并停止依赖它的操作。
-4. 源码恢复后，先审查安装脚本及副作用，再按实际依赖清单执行本地依赖安装和离线验证。使用源码证明的命令；本文件不提供猜测的 npm、Docker 或部署命令。
-5. 从实际配置 schema 生成仅含占位值的示例，验证必填字段与格式。不得读取已有凭据存储来自动填充。
-6. 记录安装结果、版本、测试通过项及剩余阻碍，输出中隐藏凭据和个人信息。
+1. Check read access to this private repository. If access is missing, the repository owner must grant it.
+2. Clone or inspect the repository and review existing files and history without overwriting user work.
+3. Check that source code, lockfiles, runtime requirements, tests, and a supported deployment entry point are present. Report specific gaps and stop actions that depend on missing components.
+4. After source recovery, inspect installation scripts and their side effects before installing local dependencies and running offline checks using the actual dependency manifest. Use commands supported by the recovered source. This guide deliberately provides no speculative npm, Docker, or deployment commands.
+5. Generate placeholder-only examples from the actual configuration schema and validate required fields and formats. Do not read existing credential stores to populate configuration.
+6. Report the version, completed checks, installation outcome, and remaining blockers without exposing credentials or personal information.
 
-## 需要用户安全输入或确认
+## Steps requiring secure user input or confirmation
 
-1. 用户在 Telegram 官方 BotFather 中自行创建或选择自己的 Bot。不得替换当前生产 Bot 的 token。
-2. Bot token、webhook 校验秘密、配对信息等只通过实际部署平台的安全输入控件，或用户本机可见终端的隐藏输入提示填写。不得让用户粘贴到聊天、提交到仓库、写入命令参数、录屏或日志。源码没有受支持的安全输入入口时先停止，不临时发明配置脚本。
-3. 部署目标、费用、域名、公开访问范围及 Bot 所允许的用户/聊天范围由用户决定。Agent 应先展示具体变更及影响，再取得部署、设置 webhook 或权限变更的明确授权。使用新的独立环境，不复用原插件身份、数据库或凭据。
-4. 插件安装授权、OAuth 或主机权限确认通过宿主提供的正式界面完成，Agent 不代替用户同意。
-5. 双向验证需要用户同意发送测试消息，并使用独立测试会话。不得自动读取真实聊天或向未知对象发消息。
+1. The user creates or selects their own Bot through the official Telegram BotFather. Do not replace an existing production Bot token.
+2. Enter Bot tokens, webhook verification secrets, and pairing information only through the supported deployment platform's secure input controls or a hidden input prompt in a terminal visible to the user on their own computer. Never request these values in chat or put them in repository files, command arguments, recordings, or logs. If the recovered source has no supported secure input mechanism, stop instead of inventing a configuration script.
+3. The user chooses the deployment target, costs, domain, access scope, and allowed Telegram users or chats. Present concrete changes and their effects before obtaining explicit authorization to deploy, configure webhooks, or change permissions. Use an independent environment; do not reuse the original plugin identity, database, or credentials.
+4. Complete plugin installation, OAuth authorization, and host permission prompts through the host's supported interface. The Agent must not consent on the user's behalf.
+5. Obtain consent before sending test messages and use a dedicated test conversation. Do not automatically read real conversations or send messages to unknown recipients.
 
-## 源码恢复后的验收
+## Acceptance checks after source recovery
 
-- 检查实现是否真的支持 README 中所列事件与四个工具，并依据实际 schema 校验输入输出。
-- 验证 webhook 来源校验、访问控制、消息去重、敏感信息遮蔽，以及失败时的行为。
-- 用户确认后，从测试 Telegram 会话发送不含个人信息的文本，确认 Dot 收到事件，再验证读取、回复及更新；保留脱敏结果，不保存真实聊天。
-- 报告本地测试与生产连通性各自是否验证。过去的双向测试不能代替当前源码版本验收。
+- Verify that the implementation supports the recorded event and four tools, and validate inputs and outputs against their actual schemas.
+- Verify webhook origin validation, access controls, message deduplication, sensitive information redaction, and failure behavior.
+- After user confirmation, send nonpersonal test text from a dedicated Telegram conversation, verify delivery to Dot, and test reading, replying, and updating. Retain only redacted results, not real conversations.
+- Report local checks and production connectivity separately. Previous bidirectional testing does not validate the recovered source version.
 
-## 保护现有环境
+## Protect the existing environment
 
-当前整理仓库任务不允许重新部署、重设 webhook、生成或替换凭据、改变网络或权限。不得把本指南视作这些操作的授权。
+The current repository preparation task does not authorize redeployment, webhook changes, credential creation or replacement, or network and permission changes. This guide does not authorize those actions.
 
-任何提交前都要检查待提交文件及全部待推送历史：token、私钥、真实聊天、用户配置、配对信息和运行数据不能进入仓库。`.gitignore` 只能防止部分误提交，不能代替审查。若发现秘密，停止推送并先清理待推送内容；不要自动轮换生产凭据。
+Before every push, inspect all staged files and all history being pushed for tokens, private keys, real conversations, user configuration, pairing information, and runtime data. A `.gitignore` file does not replace review. If secrets are found, stop the push and sanitize the pending content first. Do not automatically rotate production credentials.

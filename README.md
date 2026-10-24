@@ -1,20 +1,20 @@
-# Telegram Bot ↔ Dot 插件
+# Telegram Bot to Dot bridge
 
-目标：把 Telegram 消息通过 MCP Events 送入 Dot，并通过工具回复或更新 Telegram 消息。
+Telegram Bot to Dot bridge using MCP Events, with tools to read, reply to, and update Telegram messages.
 
-**当前状态：源码恢复待完成。本仓库目前只有安装约定和来源记录，不能安装或部署。** 原运行插件仍独立运行，本仓库的创建没有改变它的配置。
+**Status: original source recovery is incomplete. This repository currently contains documentation only and cannot be installed or deployed.** Creating this repository did not change the existing running plugin or its configuration.
 
-## 交给 Agent 的一句话
+## Give this sentence to your Agent
 
-> 请读取 https://github.com/vingeraycn/telegram-dot-plugin 的 INSTALL.md，先核实源码完整性，再按文档安装并引导我安全地完成交互式配置；若源码或受支持的部署方式缺失，请明确报告阻碍，不要猜测命令，也不要修改我现有的 Bot 或 webhook。
+> Read INSTALL.md in https://github.com/vingeraycn/telegram-dot-plugin, verify source completeness, then follow the documented installation process and guide me through secure interactive configuration; if source code or a supported deployment method is missing, report the blocker, do not invent commands, and do not modify my existing Bot or webhook.
 
-这是私有仓库。其他用户及其 Agent 必须先获得仓库读取权限；仓库所有者需要自行决定授权，不应为了安装擅自公开仓库。
+This is a private repository. Other users and their Agents need read access granted by the owner. Do not make the repository public to enable installation.
 
-## 已知接口
+## Recorded interfaces
 
-- 事件：`telegram.message.received`
-- 工具：`get_bridge_status`、`read_telegram_message`、`reply_telegram_message`、`update_telegram_message`
+- Event: `telegram.message.received`
+- Tools: `get_bridge_status`, `read_telegram_message`, `reply_telegram_message`, `update_telegram_message`
 
-这些名称来自原插件记录，尚未从源码核验参数和实现。不能仅根据名称构造调用参数或重新实现后声称是原源码。
+These names come from the original plugin record. Their arguments and implementations have not been verified against source code. Do not infer call schemas or present a new implementation as the original source.
 
-参见 [安装与安全配置约定](INSTALL.md) 和 [来源与恢复状态](SOURCE_STATUS.md)。
+See [installation and secure configuration](INSTALL.md) and [source recovery status](SOURCE_STATUS.md).
