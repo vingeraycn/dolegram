@@ -1,0 +1,7 @@
+{
+  "ownerId": "REPLACE_WITH_LOCAL_OWNER_ID",
+  "allowedChatIds": ["REPLACE_WITH_PRIVATE_CHAT_ID"],
+  "mcpBearerToken": "REPLACE_USING_LOCAL_HIDDEN_INPUT",
+  "telegramBotToken": "REPLACE_USING_LOCAL_HIDDEN_INPUT",
+  "telegramWebhookSecret": "REPLACE_USING_LOCAL_HIDDEN_INPUT"
+}

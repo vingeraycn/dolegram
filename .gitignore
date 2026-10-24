@@ -13,3 +13,10 @@ runtime/
 data/
 sessions/
 pairing/
+__pycache__/
+*.pyc
+*.sqlite
+*.sqlite-*
+*.lock.runtime
+coverage/
+plugin-build/

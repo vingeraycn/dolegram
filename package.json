@@ -1,0 +1,24 @@
+{
+  "name": "dotg",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test",
+    "check": "tsc --noEmit && eslint .",
+    "configure": "python3 scripts/configure.py"
+  },
+  "dependencies": {
+    "ipaddr.js": "2.2.0",
+    "standardwebhooks": "1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "eslint": "10.13.0",
+    "typescript": "7.0.2"
+  }
+}

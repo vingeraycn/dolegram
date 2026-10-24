@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "dotg",
+  "version": "0.1.0",
+  "description": "Reply to allowlisted private Telegram messages through official MCP Events.",
+  "author": { "name": "vingeraycn" },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "dotg",
+        "shortDescription": "Telegram to Dot bridge",
+        "longDescription": "Receive allowlisted private Telegram messages and send one formal reply with cumulative edits.",
+        "developerName": "vingeraycn",
+        "capabilities": [],
+        "defaultPrompt": "Help me subscribe to my allowlisted private Telegram messages and respond through dotg."
+      }
+    }
+  }
+}
