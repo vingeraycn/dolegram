@@ -347,3 +347,40 @@ test('Standard Webhooks checks the signing timestamp, not event occurrence time'
   signedHeaders['webhook-signature'] = signer.sign('synthetic-id', fresh, body);
   assert.equal(signer.verify(body, signedHeaders).eventId, 'synthetic-id');
 });
+
+test('isolated HTTP workflow subscribes, receives, signs and edits one synthetic reply', async t => {
+  const { bridge, calls, posts } = fixture(t);
+  const server = createBridgeServer(bridge);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const rpc = async (method, params) => {
+    const response = await fetch(`${origin}/mcp`, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
+    assert.equal(response.status, 200);
+    const value = await response.json();
+    assert.equal(value.error, undefined);
+    return value.result;
+  };
+  const created = await rpc('events/subscribe', subscription());
+  assert.equal(posts[0].value.type, 'verification');
+  const received = await fetch(`${origin}/telegram/webhook`, { method: 'POST', headers: { 'X-Telegram-Bot-Api-Secret-Token': config.telegramWebhookSecret }, body: JSON.stringify(update()) });
+  assert.equal((await received.json()).accepted, true);
+  await bridge.deliver();
+  const delivered = posts.find(post => post.value.name === EVENT_NAME);
+  assert(delivered);
+  assert.equal(delivered.headers['X-MCP-Subscription-Id'], created.id);
+  const verified = new Webhook(signingSecret).verify(delivered.body, delivered.headers);
+  const messageKey = verified.data.message_key;
+  const message = await rpc('tools/call', { name: 'read_telegram_message', arguments: { message_key: messageKey } });
+  assert.equal(JSON.parse(message.content[0].text).text, update().message.text);
+  let text = 'First useful formal content.';
+  for (const revision of [1, 2, 3]) {
+    const result = await rpc('tools/call', { name: revision === 1 ? 'reply_telegram_message' : 'update_telegram_message', arguments: { message_key: messageKey, text, revision, final: revision === 3 } });
+    assert.equal(result.isError, undefined);
+    text += ' Additional useful content.';
+  }
+  assert.deepEqual(calls.map(call => call.method), ['sendMessage', 'editMessageText', 'editMessageText']);
+  assert(calls.slice(1).every(call => call.params.message_id === 77));
+  await rpc('events/unsubscribe', subscription());
+  assert.equal((await bridge.callTool('get_bridge_status', {})).subscriptions, 0);
+});
