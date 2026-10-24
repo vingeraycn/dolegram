@@ -25,7 +25,7 @@ Each incoming update maps to one stored message and at most one Telegram reply I
 
 The service persists pending intent before each external Telegram write. A crash or ambiguous transport outcome changes that operation to uncertain and blocks subsequent writes. Exactly-once delivery cannot be promised across an external API timeout; automatic duplicate sends are avoided by requiring operator reconciliation. Explicit Telegram rate-limit/rejection responses permit a retry after the stored deadline. Telegram secret headers authenticate intake, and persistent update IDs reject duplicates; Telegram supplies no signed timestamp, so replay age checks are a bounded additional defense rather than a substitute for secret protection.
 
-All ingress and delivery operations are serialized by the HTTP service. Runtime data is deliberately not shared by multiple processes. Authorization is single-owner plus an explicit private chat allowlist, checked at subscription, tool access, intake and outbound delivery. Bot-authored messages, groups, edited messages and other update types are ignored, preventing bot-reply feedback loops.
+All ingress and delivery operations are serialized by the HTTP service. Runtime data is deliberately not shared by multiple processes. Stored messages are bound to the installation owner, so changing the owner does not grant access to previous messages. Authorization is single-owner plus an explicit private chat allowlist, checked at subscription, tool access, intake and outbound delivery. Bot-authored messages, groups, edited messages and other update types are ignored, preventing bot-reply feedback loops.
 
 ## Verified and unverified
 

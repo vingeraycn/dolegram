@@ -111,7 +111,7 @@ export class Bridge {
     const messageKey = `telegram_${update.update_id}`;
     return this.store.mutate(state => {
       if (state.messages[messageKey]) return { duplicate: true };
-      state.messages[messageKey] = { messageKey, chatId: String(message.chat.id), messageId: message.message_id, text: message.text, reply: null };
+      state.messages[messageKey] = { owner: this.config.ownerId, messageKey, chatId: String(message.chat.id), messageId: message.message_id, text: message.text, reply: null };
       for (const sub of Object.values(state.subscriptions)) {
         if (sub.owner !== this.config.ownerId || sub.expiresAt <= this.now() || sub.chatId !== String(message.chat.id)) continue;
         const eventId = `evt_${update.update_id}_${sub.id}`;
@@ -142,11 +142,11 @@ export class Bridge {
   }
   async callTool(name, args) {
     const state = this.store.read();
-    if (name === 'get_bridge_status') return { source: 'reimplementation', messages: Object.keys(state.messages).length,
+    if (name === 'get_bridge_status') return { source: 'reimplementation', messages: Object.values(state.messages).filter(message => message.owner === this.config.ownerId).length,
       subscriptions: Object.values(state.subscriptions).filter(sub => sub.expiresAt > this.now() && sub.owner === this.config.ownerId && this.allowed(sub.chatId)).length,
-      uncertainReplies: Object.values(state.messages).filter(message => message.reply?.status === 'uncertain').length };
+      uncertainReplies: Object.values(state.messages).filter(message => message.owner === this.config.ownerId && message.reply?.status === 'uncertain').length };
     const message = state.messages[args.message_key];
-    if (!message || !this.allowed(message.chatId)) throw new RpcFailure(-32602, 'Message unavailable');
+    if (!message || message.owner !== this.config.ownerId || !this.allowed(message.chatId)) throw new RpcFailure(-32602, 'Message unavailable');
     if (name === 'read_telegram_message') return { ...message, reply: message.reply && { revision: message.reply.revision, status: message.reply.status, final: message.reply.final } };
     const previous = message.reply;
     const retrySame = previous?.revision === args.revision && previous?.text === args.text && previous?.final === args.final;

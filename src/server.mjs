@@ -31,12 +31,14 @@ export function createBridgeServer(bridge) {
     if (request.method !== 'POST' || !['/mcp', '/telegram/webhook'].includes(request.url)) return respond(404, { error: 'Not found' });
     let parsed;
     try {
-      let body = '';
+      const chunks = [];
+      let bytes = 0;
       for await (const chunk of request) {
-        body += chunk;
-        if (Buffer.byteLength(body) > 262144) return respond(413, { error: 'Request too large' });
+        bytes += chunk.length;
+        if (bytes > 262144) return respond(413, { error: 'Request too large' });
+        chunks.push(chunk);
       }
-      parsed = JSON.parse(body);
+      parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'));
     } catch { return respond(400, { error: 'Invalid JSON' }); }
     try {
       const result = await serialize(() => request.url === '/mcp'
@@ -45,7 +47,10 @@ export function createBridgeServer(bridge) {
       respond(200, request.url === '/mcp' ? { jsonrpc: '2.0', id: parsed.id, result } : result);
     } catch (error) {
       const failure = error instanceof RpcFailure ? error : new RpcFailure(-32603, 'Internal error');
-      const status = failure.code === -32001 ? 401 : 200;
+      let status = failure.code === -32001 ? 401 : 200;
+      if (request.url === '/telegram/webhook' && status !== 401) {
+        status = failure.code === -32602 ? 400 : 500;
+      }
       respond(status, request.url === '/mcp' ? { jsonrpc: '2.0', id: parsed?.id ?? null, error: { code: failure.code, message: failure.message, ...(failure.reason ? { data: { reason: failure.reason } } : {}) } } : { error: 'Request rejected' });
     }
   });

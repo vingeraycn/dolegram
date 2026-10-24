@@ -1,5 +1,6 @@
 import test from 'node:test';
 import https from 'node:https';
+import http from 'node:http';
 import { EventEmitter } from 'node:events';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -266,4 +267,83 @@ test('plugin preparation generates credential-free official bearer configuration
     assert.equal(mcp.mcpServers.dotg.url, 'https://synthetic.example.test/mcp');
     assert(!JSON.stringify(mcp).includes(config.mcpBearerToken));
   } finally { rmSync(directory, { recursive: true }); }
+});
+
+test('stored message ownership is enforced even if the owner changes with the same allowlist', async t => {
+  const { bridge, store } = fixture(t);
+  bridge.receive(update(), config.telegramWebhookSecret);
+  const otherOwner = new Bridge({ store, config: { ...config, ownerId: 'different-test-owner' }, telegram: async () => { throw new Error('Must not send'); } });
+  await assert.rejects(otherOwner.callTool('read_telegram_message', { message_key: 'telegram_1' }), /unavailable/);
+  await assert.rejects(otherOwner.callTool('reply_telegram_message', { message_key: 'telegram_1', text: 'Wrong owner', revision: 1, final: true }), /unavailable/);
+  assert.equal((await otherOwner.callTool('get_bridge_status', {})).messages, 0);
+});
+
+test('concurrent HTTP replies cannot create two Telegram messages', async t => {
+  const { bridge, calls } = fixture(t);
+  bridge.receive(update(), config.telegramWebhookSecret);
+  const server = createBridgeServer(bridge);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const url = `http://127.0.0.1:${server.address().port}/mcp`;
+  const send = async (text, revision = 1, final = false) => {
+    const result = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: revision === 1 ? 'reply_telegram_message' : 'update_telegram_message', arguments: { message_key: 'telegram_1', text, revision, final } } }) });
+    return (await result.json()).result;
+  };
+  const results = await Promise.all([send('First useful answer.'), send('Competing useful answer.')]);
+  assert.equal(results.filter(result => result.isError).length, 1);
+  assert.equal(calls.length, 1);
+  const firstText = calls[0].params.text;
+  const edits = await Promise.all([send(firstText + ' More useful detail A.', 2), send(firstText + ' More useful detail B.', 2)]);
+  assert.equal(edits.filter(result => result.isError).length, 1);
+  assert.equal(calls.length, 2);
+  assert.equal((await send(calls[1].params.text + ' Final useful detail.', 3, true)).isError, undefined);
+  assert.deepEqual(calls.map(call => call.method), ['sendMessage', 'editMessageText', 'editMessageText']);
+  assert.equal(calls[1].params.message_id, calls[2].params.message_id);
+});
+
+test('webhook storage failure returns 500 so Telegram can retry', async t => {
+  const { bridge, store } = fixture(t);
+  const server = createBridgeServer(bridge);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  t.mock.method(store, 'mutate', () => { throw new Error('Synthetic storage failure'); });
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/telegram/webhook`, {
+    method: 'POST', headers: { 'X-Telegram-Bot-Api-Secret-Token': config.telegramWebhookSecret }, body: JSON.stringify(update()),
+  });
+  assert.equal(response.status, 500);
+  assert(!JSON.stringify(await response.json()).includes('storage'));
+});
+
+
+test('split UTF-8 request chunks preserve the exact Telegram text', async t => {
+  const { bridge, store } = fixture(t);
+  const server = createBridgeServer(bridge);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const value = update();
+  value.message.text = 'Synthetic emoji: \u{1F331}';
+  const body = Buffer.from(JSON.stringify(value));
+  const split = body.indexOf(Buffer.from('\u{1F331}')) + 1;
+  const status = await new Promise((resolve, reject) => {
+    const request = http.request({ hostname: '127.0.0.1', port: server.address().port, path: '/telegram/webhook', method: 'POST', headers: { 'X-Telegram-Bot-Api-Secret-Token': config.telegramWebhookSecret } }, response => {
+      response.resume(); response.on('end', () => resolve(response.statusCode));
+    });
+    request.on('error', reject);
+    request.write(body.subarray(0, split));
+    setImmediate(() => request.end(body.subarray(split)));
+  });
+  assert.equal(status, 200);
+  assert.equal(store.read().messages.telegram_1.text, value.message.text);
+});
+
+test('Standard Webhooks checks the signing timestamp, not event occurrence time', () => {
+  const signer = new Webhook(signingSecret);
+  const body = JSON.stringify({ eventId: 'synthetic-id', timestamp: '2000-01-01T00:00:00Z' });
+  const old = new Date(Date.now() - 600000);
+  const signedHeaders = { 'webhook-id': 'synthetic-id', 'webhook-timestamp': String(Math.floor(old.getTime() / 1000)), 'webhook-signature': signer.sign('synthetic-id', old, body) };
+  assert.throws(() => signer.verify(body, signedHeaders));
+  const fresh = new Date();
+  signedHeaders['webhook-timestamp'] = String(Math.floor(fresh.getTime() / 1000));
+  signedHeaders['webhook-signature'] = signer.sign('synthetic-id', fresh, body);
+  assert.equal(signer.verify(body, signedHeaders).eventId, 'synthetic-id');
 });

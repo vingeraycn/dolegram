@@ -24,14 +24,19 @@ export async function callbackPost(destination, body, headers, resolver = lookup
     throw new Error('Unsafe callback URL');
   }
   const host = url.hostname.replace(/^\[|\]$/g, '');
-  const addresses = await resolver(host, { all: true, verbatim: true });
+  const signal = AbortSignal.timeout(10000);
+  /** @type {Promise<never>} */
+  const timeout = new Promise((_resolve, reject) => {
+    signal.addEventListener('abort', () => reject(new Error('Callback timeout')), { once: true });
+  });
+  const addresses = await Promise.race([resolver(host, { all: true, verbatim: true }), timeout]);
   if (!addresses.length || addresses.some(({ address }) => !publicAddress(address))) {
     throw new Error('Unsafe callback address');
   }
   const target = addresses[0];
   return new Promise((resolve, reject) => {
     const request = https.request(url, {
-      method: 'POST', signal: AbortSignal.timeout(10000), headers: { ...headers, 'Content-Length': Buffer.byteLength(body) },
+      method: 'POST', signal, headers: { ...headers, 'Content-Length': Buffer.byteLength(body) },
       lookup: (_hostname, options, done) => {
         if (options.all) done(null, [target]);
         else done(null, target.address, target.family);
