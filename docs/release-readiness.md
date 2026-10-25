@@ -19,7 +19,7 @@ The configuration helper generates an independent bearer when omitted. The macOS
 - Perform a clean-room installation using a different approved account/Bot and only the published guide. Record which steps required the owner and resolve unclear steps. Current-owner acceptance does not prove universal installability.
 - Verify current official Tunnel client versions/checksums and host feature availability. Keep the placeholder package noninstallable. Do not invent public distribution support for private Tunnel connections.
 - Configure private vulnerability reporting and a maintainer contact, then check dependency licenses and supported runtime versions.
-- Tag a tested release and make CI checks required according to the repository's chosen contribution policy.
+- Configure CI only if the owner opts in to the necessary GitHub workflow authorization. Remote CI is currently deferred; local checks are documented in CONTRIBUTING.md. Tag a tested release and define the contribution policy.
 
 ## Follow-up implementation priorities
 

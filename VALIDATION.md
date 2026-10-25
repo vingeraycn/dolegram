@@ -27,4 +27,4 @@ The generic distributable launcher has only synthetic verification; the existing
 
 On 2026-10-24 the initial implementation passed 41 synthetic tests after a supported executor resolved an earlier loopback-listener permission block. Those historical blocked attempts are not a current product limitation. Earlier source-only reports of no live connection were superseded by the private Mac acceptance described above.
 
-Keep release evidence separate from runtime evidence. The CI workflow covers Node 22 and 24 plus the macOS launcher; check its actual run result for the commit being released. Local success is not a claim that a newly added remote workflow has already passed.
+Remote CI is intentionally deferred by the owner. The checks above ran locally; no GitHub Actions run is claimed. A future CI setup should cover supported Node LTS versions and the macOS launcher after the required repository authorization is approved.
