@@ -1,6 +1,6 @@
-# Public release and onboarding plan
+# Public beta scope and release checks
 
-The repository remains private. The README sentence opens the [desktop Agent guide](desktop-install.md), which checks local capabilities and explains owner participation. INSTALL.md is the technical runbook; TUNNEL.md, the Keychain guide, Dot handler and OPERATIONS.md provide focused details. No copied production identifiers or secrets are needed to install a fresh instance.
+The owner approved v0.1.0 as a public beta. Independent-account installation and broader recovery acceptance remain follow-up gates for stronger reliability claims, not completed tests. The README sentence opens the [desktop Agent guide](desktop-install.md), which checks local capabilities and explains owner participation. INSTALL.md is the technical runbook; TUNNEL.md, the Keychain guide, Dot handler and OPERATIONS.md provide focused details. No copied production identifiers or secrets are needed to install a fresh instance.
 
 ## Implemented onboarding
 
@@ -12,14 +12,14 @@ The repository remains private. The README sentence opens the [desktop Agent gui
 
 The configuration helper generates an independent bearer when omitted. The macOS launcher template reads exactly one Keychain item and injects upstream authorization without putting secrets into arguments or profile files. Neither helper creates account resources or bypasses system consent. Configuration and the database are stored locally; authorized message content is sent to Telegram and ChatGPT. See [data handling](privacy.md).
 
-## Required before changing visibility
+## Release checks
 
 - The owner selected MIT and the [license](../LICENSE) is present. [Third-party notices](../THIRD_PARTY_NOTICES.md) cover all four locked production dependencies and accompany the Sites bundle. Recheck this inventory on dependency changes and verify branding provenance before release; the project license does not grant third-party trademark rights.
 - Repeat the privacy audit of history, releases, attachments, issues and CI logs before publication. An owner-authorized rewrite removed identified private development references and personal email addresses from reachable history. Old commits remained accessible to the authenticated owner through GitHub by SHA after the rewrite; service-side cache/object removal remains separate and is not claimed. The owner chose not to pursue further history/cache cleanup. Preserve the completed rewrite and do not merge or push pre-cleanup clones back into the repository; prioritize preventing new secret or private-data exposure.
-- Perform a clean-room installation using a different approved account/Bot and only the published guide. Record which steps required the owner and resolve unclear steps. Current-owner acceptance does not prove universal installability.
+- Publish the independent-installation limitation explicitly. Before claiming general installability, perform a clean-room installation using a different approved account/Bot and only the published guide, record owner participation, and resolve unclear steps. Current-owner acceptance does not prove universal installability.
 - Verify current official Tunnel client versions/checksums and host feature availability. Keep the placeholder package noninstallable. Do not invent public distribution support for private Tunnel connections.
-- Configure private vulnerability reporting and a maintainer contact, then check dependency licenses and supported runtime versions.
-- Configure CI only if the owner opts in to the necessary GitHub workflow authorization. Remote CI is currently deferred; local checks are documented in CONTRIBUTING.md. Tag a tested release and define the contribution policy.
+- Enable and verify GitHub private vulnerability reporting when the repository becomes public; SECURITY.md links the private maintainer contact form. Check dependency licenses and supported runtime versions.
+- Configure CI only if the owner opts in to the necessary GitHub workflow authorization. Remote CI is currently deferred; local checks are documented in CONTRIBUTING.md. Tag the reviewed version and publish it as a GitHub pre-release titled Public Beta; the contribution policy is in CONTRIBUTING.md.
 
 ## Follow-up implementation priorities
 

@@ -1,6 +1,6 @@
 # Contributing
 
-The repository is preparing for a public release under the [MIT License](LICENSE). Contributions are made under the same license. Keep code, comments, commit messages and documentation in English. Do not alter repository visibility or rewrite history as routine cleanup.
+dotg is an open-source public beta under the [MIT License](LICENSE). Contributions are made under the same license. Keep code, comments, commit messages and documentation in English. Do not alter repository visibility or rewrite history as routine cleanup.
 
 ## Development checks
 

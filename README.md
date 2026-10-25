@@ -6,6 +6,8 @@
 
 Talk to your existing ChatGPT Dot from Telegram. Ask a question, send an idea, or pick up a conversation with your personal assistant through your own Bot. Longer answers grow in the same message, keeping your chat easy to follow.
 
+**v0.1.0 Public Beta.** The core flow has been tested on one installation. Setup requires access to ChatGPT private Tunnels and MCP Events; availability depends on your account. See [release notes](CHANGELOG.md) for verified behavior and current limits.
+
 ## Install with your Agent
 
 ```text
@@ -16,7 +18,7 @@ local tools and Computer Use. Reuse existing resources, protect secrets,
 preserve rollback, and verify a real reply and in-place message updates.
 ```
 
-Paste this into Codex or ChatGPT Work with access to your Mac. Your Agent handles setup and explains any login or permission steps that need you. See the [desktop guide](docs/desktop-install.md) for requirements. The repository is currently private, so your Agent needs read access.
+Paste this into Codex or ChatGPT Work with access to your Mac. Your Agent handles setup and explains any login or permission steps that need you. See the [desktop guide](docs/desktop-install.md) for requirements.
 
 ## What you get
 
@@ -51,7 +53,7 @@ The private Mac route has passed live discovery, Events subscription, short repl
 | Understand security and reporting | [SECURITY.md](SECURITY.md) |
 | Understand message storage and privacy | [Data handling](docs/privacy.md) |
 | Contribute and run checks | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Prepare the public release | [Release readiness](docs/release-readiness.md) |
+| Understand the public beta and release checks | [Release scope](docs/release-readiness.md) |
 | Understand design and provenance | [ARCHITECTURE.md](ARCHITECTURE.md), [SOURCE_STATUS.md](SOURCE_STATUS.md) |
 
 The [portable plugin template](PLUGIN.md) is for a separately hosted HTTPS backend. Its placeholder is deliberately not installable and is not a Tunnel package. The [Sites adapter](sites/README.md) is source-only with production callback delivery disabled; it is not the supported onboarding route.

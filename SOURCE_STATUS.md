@@ -8,4 +8,4 @@ The private repository was renamed from `telegram-dot-plugin` to `dotg` with his
 
 The private Mac route has since completed real connection, Events and reply/edit acceptance. See TUNNEL.md for the evidence boundary; Sites remains source-only.
 
-Private development identifiers and personal commit email addresses were removed from reachable Git history in an owner-authorized cleanup. The commit sequence and implementation were preserved. GitHub cached objects and external copies are separate from reachable history and may require additional removal. The repository remains private; no open-source license is implied. See [release readiness](docs/release-readiness.md).
+Private development identifiers and personal commit email addresses were removed from reachable Git history in an owner-authorized cleanup. The commit sequence and implementation were preserved. GitHub cached objects and external copies are separate from reachable history and may require additional removal. The project is released under the [MIT License](LICENSE); third-party names and marks retain their own rights. See [release readiness](docs/release-readiness.md).
