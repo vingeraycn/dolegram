@@ -15,7 +15,7 @@ The configuration helper generates an independent bearer when omitted. The macOS
 ## Required before changing visibility
 
 - Choose and add the owner's intended open-source license. No license is implied by this preparation.
-- Audit all history, releases, attachments, issues and CI logs—not just the latest tree. Earlier commits contained private development conversation/plugin identifiers; removing them from current files does not remove history. Review commit author/committer names and emails as well. Decide whether an explicitly authorized history rewrite or a clean public export is appropriate. Do not rewrite the private working repository automatically.
+- Repeat the privacy audit of history, releases, attachments, issues and CI logs before publication. An owner-authorized rewrite removed identified private development references and personal email addresses from reachable history. Old commits remained accessible to the authenticated owner through GitHub by SHA after the rewrite; service-side cache/object removal remains separate. Verify that boundary before changing visibility, and do not merge or push pre-cleanup clones back into the repository.
 - Perform a clean-room installation using a different approved account/Bot and only the published guide. Record which steps required the owner and resolve unclear steps. Current-owner acceptance does not prove universal installability.
 - Verify current official Tunnel client versions/checksums and host feature availability. Keep the placeholder package noninstallable. Do not invent public distribution support for private Tunnel connections.
 - Configure private vulnerability reporting and a maintainer contact, then check dependency licenses and supported runtime versions.

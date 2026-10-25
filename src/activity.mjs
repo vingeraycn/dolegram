@@ -66,9 +66,9 @@ export class TelegramActivity {
     // Drafts expire automatically; no extra permanent acknowledgement messages.
     // Once useful content exists, keep it visible and use only typing status.
     if (!hasReply && (state.draftMessageId !== message.messageId || state.phase !== phase || state.draftAt <= this.now())) {
-      const text = uncertain ? '回复发送结果暂时无法确认，正在等待核查。'
-        : slow ? '这次等待有点久，目前还没有收到完整回复。'
-        : waiting ? '⏳ 消息已送达，等待系统转送 Dot' : '';
+      const text = uncertain ? 'Reply delivery is unconfirmed. Awaiting review.'
+        : slow ? 'This is taking longer than expected. Still waiting for a complete reply.'
+        : waiting ? '⏳ Message delivered. Waiting for the system to forward it to Dot.' : '';
       jobs.push(this.send('sendMessageDraft', { chat_id: message.chatId, draft_id: message.messageId, text }, state).then(sent => {
         if (sent) {
           state.phase = phase;

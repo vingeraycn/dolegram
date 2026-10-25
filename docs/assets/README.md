@@ -1,0 +1,9 @@
+# Visual assets
+
+- `dotg-icon.png`: the Dot ring combined with a Telegram paper plane; transparent exterior and center.
+- `dotg-logo.png`: horizontal icon and wordmark for the README.
+- `how-it-works.png`: the Telegram → Mac → Dot round trip, with a separate return path.
+
+Created with the built-in image generation tool. The ring shape follows the public graphic in OpenAI's [Introducing dots](https://openai.com/index/introducing-dots/) announcement; the source graphic is [dots-o.svg](https://images.ctfassets.net/kftzwdyauwt9/KKSjto3MtJguvsLQsM1Bp/1704a6937d22b1bb3cac38dc5f43f9df/dots-o.svg). The composite is project artwork, not an official OpenAI or Telegram logo or endorsement. Brand references do not grant trademark rights or an open-source license.
+
+Keep diagrams aligned with the actual local bridge. Incoming text reaches the host through signed MCP Events; authorized tools return through the private MCP Tunnel, and dotg writes to Telegram through the Bot API. Do not imply instantaneous replies or that all message processing stays on the Mac.

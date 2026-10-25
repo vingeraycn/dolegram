@@ -17,7 +17,7 @@ test('one draft changes from queued to native Thinking; typing only covers proce
   await activity.tick();
   assert.equal(calls.length, 1);
   assert.equal(calls[0].method, 'sendMessageDraft');
-  assert.equal(calls[0].params.text, '⏳ 消息已送达，等待系统转送 Dot');
+  assert.equal(calls[0].params.text, '⏳ Message delivered. Waiting for the system to forward it to Dot.');
   const draftId = calls[0].params.draft_id;
   advance(3000);
   await activity.tick();
@@ -51,7 +51,7 @@ test('slow responses have bounded activity; uncertain writes do not show typing'
   await activity.tick();
   assert.equal(calls.length, 1);
   assert.equal(calls[0].method, 'sendMessageDraft');
-  assert.notEqual(calls[0].params.text, '');
+  assert.equal(calls[0].params.text, 'This is taking longer than expected. Still waiting for a complete reply.');
   advance(100000);
   await activity.tick();
   assert.equal(calls.length, 1);
@@ -60,7 +60,7 @@ test('slow responses have bounded activity; uncertain writes do not show typing'
   await other.activity.tick();
   assert.equal(other.calls.length, 1);
   assert.equal(other.calls[0].method, 'sendMessageDraft');
-  assert.match(other.calls[0].params.text, /确认/);
+  assert.equal(other.calls[0].params.text, 'Reply delivery is unconfirmed. Awaiting review.');
 });
 
 test('draft failure cannot suppress typing; rate limits postpone all feedback', async () => {
