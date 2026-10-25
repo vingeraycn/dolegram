@@ -7,7 +7,7 @@
     "node": "^22.16.0 || ^24.0.0"
   },
   "scripts": {
-    "start": "node scripts/check-runtime.mjs && node src/server.mjs",
+    "start": "python3 scripts/run-backend.py",
     "test": "node scripts/check-runtime.mjs && node --test",
     "check": "node scripts/check-runtime.mjs && tsc --noEmit && eslint .",
     "configure": "python3 scripts/configure.py",

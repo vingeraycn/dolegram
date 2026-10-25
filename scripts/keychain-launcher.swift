@@ -15,7 +15,7 @@ struct Settings: Decodable {
 enum LaunchFailure: Error { case unavailable, invalid, testFailed }
 
 func privateFile(_ path: String) throws -> Data {
-    let fd = open(path, O_RDONLY | O_NOFOLLOW)
+    let fd = open(path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK)
     guard fd >= 0 else { throw LaunchFailure.unavailable }
     let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
     defer { try? handle.close() }
@@ -86,8 +86,17 @@ func arguments(_ settings: Settings) -> [String] {
      "--open-web-ui=false", "--allow-remote-ui=false", "--tracing.enabled=false"]
 }
 
-func launch(_ settings: Settings) throws {
+func configureInteraction(background: Bool) throws {
+    // Background retries must never prompt or change the item's access policy.
+    // Existing authorization still applies; locked/confirmation-only access fails.
+    if background && SecKeychainSetUserInteractionAllowed(false) != errSecSuccess {
+        throw LaunchFailure.unavailable
+    }
+}
+
+func launch(_ settings: Settings, background: Bool = false) throws {
     try validate(settings)
+    try configureInteraction(background: background)
     let executable = settings.runtimeDirectory + "/bin/tunnel-client"
     var metadata = stat()
     guard lstat(settings.runtimeDirectory, &metadata) == 0,
@@ -121,6 +130,12 @@ func launch(_ settings: Settings) throws {
 
 func selfTest() throws {
     // Synthetic inputs only: no Keychain reads or client process execution.
+    var previous: DarwinBoolean = false
+    guard SecKeychainGetUserInteractionAllowed(&previous) == errSecSuccess else { throw LaunchFailure.testFailed }
+    defer { SecKeychainSetUserInteractionAllowed(previous.boolValue) }
+    try configureInteraction(background: true)
+    var allowed: DarwinBoolean = true
+    guard SecKeychainGetUserInteractionAllowed(&allowed) == errSecSuccess, !allowed.boolValue else { throw LaunchFailure.testFailed }
     let settings = Settings(runtimeDirectory: "/tmp/dotg-synthetic", backendConfig: "/tmp/config-synthetic.json",
                             keychainService: "synthetic-service", keychainAccount: "synthetic-account",
                             organizationID: "org-synthetic", tunnelID: "tunnel_synthetic")
@@ -149,21 +164,21 @@ func selfTest() throws {
         _ = try environment(readKey: { throw LaunchFailure.unavailable }, readBearer: { bearer })
         throw LaunchFailure.testFailed
     } catch LaunchFailure.unavailable { }
-    print("PASS: exact environment, secret-free arguments, invalid input and denied-read handling; no Keychain access or process launch.")
+    print("PASS: exact environment, secret-free arguments, background interaction disabled, invalid input and denied-read handling; no Keychain access or process launch.")
 }
 
 do {
     let args = Array(CommandLine.arguments.dropFirst())
     if args == ["--self-test"] {
         try selfTest()
-    } else if args.count == 2 && args[0] == "--run" {
+    } else if args.count == 2 && ["--run", "--run-background"].contains(args[0]) {
         let settings = try JSONDecoder().decode(Settings.self, from: privateFile(args[1]))
-        try launch(settings)
+        try launch(settings, background: args[0] == "--run-background")
     } else {
-        fputs("Usage: dotg-keychain-launcher --self-test | --run /absolute/path/launcher.local.json\n", stderr)
+        fputs("Usage: dotg-keychain-launcher --self-test | (--run | --run-background) /absolute/path/launcher.local.json\n", stderr)
         exit(2)
     }
 } catch {
     fputs("dotg launcher failed closed; no secret diagnostics emitted.\n", stderr)
-    exit(1)
+    exit(78)
 }

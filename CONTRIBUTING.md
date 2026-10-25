@@ -4,7 +4,7 @@ The repository is preparing for a public release under the [MIT License](LICENSE
 
 ## Development checks
 
-Use a maintained Node LTS supported by package.json and the committed lockfile.
+Use a maintained Node LTS supported by package.json and the committed lockfile, plus Python 3. Python is required by the standalone runtime launcher as well as configuration and lifecycle tests.
 
 ```sh
 npm ci --ignore-scripts

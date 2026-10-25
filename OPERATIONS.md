@@ -32,13 +32,13 @@ Use the real host's `get_bridge_status` to check subscription status, received m
 
 1. Run automated checks on the reviewed source before replacing the running backend. Preserve the previous commit and nonsecret launch configuration.
 2. Send SIGTERM to the exact dotg backend. It aborts long polling and activity requests, waits for in-flight callback and HTTP work, closes SQLite, and releases its lock.
-3. Verify the process and listener are gone and its lock was released. Never delete an active lock or start a second poller to force recovery. After a crash, inspect process ownership and the database before explicitly removing a proven stale lock.
+3. Verify the process and listener are gone. Current releases use an OS-managed `.lease`; its file remains after exit and must never be deleted. A legacy `.lock` blocks the new launcher until the old backend stops cleanly. Never delete an active lock or start a second poller to force recovery.
 4. Back up the closed database into a private directory with private permissions. It contains messages, callback secrets, and reply state; do not upload it. A live SQLite copy requires SQLite's backup mechanism, not a casual file copy.
 5. Start the reviewed backend with the same owner, configuration and database. Retain `DOTG_ENABLE_POLLING=1` only if dotg is the approved consumer. Verify host tool access and perform an authorized real smoke test.
 
 For read-only diagnosis use SQLite read-only mode. Do not instantiate the application's `Store` on a live database: its startup recovery changes pending writes to uncertain. Do not edit production state to make a test pass.
 
-Manual restart is supported. A general boot/login service installer is not yet provided. If an owner requests one, first specify exact launch targets, Keychain behavior while locked, working directories, shutdown, and rollback; test those conditions before calling it unattended.
+Start through `npm start` or the Python runtime launcher, not direct `node src/server.mjs`. For managed jobs, use the opt-in [macOS login service](docs/service.md) to stop/start the matching component and preserve the old record when changing paths. Stop the backend before replacing source in its checkout. Login, locked-Keychain and network recovery still require installation-specific acceptance before calling the setup unattended.
 
 ## Uncertain writes and partial answers
 

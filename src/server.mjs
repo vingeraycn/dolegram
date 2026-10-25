@@ -1,14 +1,9 @@
 import { createServer } from 'node:http';
-import { openSync, closeSync, unlinkSync, mkdirSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { loadConfig } from './config.mjs';
-import { Bridge, RpcFailure } from './bridge.mjs';
-import { TelegramPoller } from './polling.mjs';
-import { Store } from './store.mjs';
-import { telegramClient } from './telegram.mjs';
-import { TelegramActivity } from './activity.mjs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { RpcFailure } from './bridge.mjs';
 import { DeliveryWorker } from './delivery.mjs';
-import { callbackPost, callbackResolver } from './security.mjs';
+import { runStandalone } from './runtime.mjs';
 
 export { loadConfig } from './config.mjs';
 
@@ -17,7 +12,7 @@ const lifecycles = new WeakMap();
 export async function closeBridgeServer(server) {
   const lifecycle = lifecycles.get(server);
   await Promise.all([lifecycle?.stop(), new Promise((resolve, reject) => {
-    server.close(error => error ? reject(error) : resolve(undefined));
+    server.close(error => error && error.code !== 'ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve(undefined));
   })]);
   // A request can finish reading its body after shutdown starts. Even if its
   // client disconnects, wait for the latest queued operation before closing DB.
@@ -79,43 +74,6 @@ export function createBridgeServer(bridge) {
   return server;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
-  try {
-    const config = loadConfig(process.env.DOTG_CONFIG ?? 'config.local.json');
-    const resolveCallback = callbackResolver(process.env.DOTG_CALLBACK_DNS_SERVERS);
-    if (process.env.DOTG_ENABLE_POLLING === '1' && config.telegramMode !== 'polling') throw new Error('Polling mode required');
-    const database = resolve(process.env.DOTG_DATABASE ?? 'runtime/dotg.sqlite');
-    mkdirSync(dirname(database), { recursive: true, mode: 0o700 });
-    // Refuse a second process; a stale lock requires explicit operator inspection.
-    const lock = `${database}.lock`;
-    const fd = openSync(lock, 'wx', 0o600);
-    const store = new Store(database);
-    const telegram = telegramClient(config.telegramBotToken);
-    const activity = new TelegramActivity({ store, config, telegram });
-    const bridge = new Bridge({ store, config, telegram, activity,
-      post: (url, body, headers) => callbackPost(url, body, headers, resolveCallback) });
-    const poller = process.env.DOTG_ENABLE_POLLING === '1'
-      ? new TelegramPoller({ bridge, store, telegram, botId: config.expectedBotId, username: config.expectedBotUsername }) : null;
-    bridge.intakeStatus = () => poller?.status() ?? { state: config.telegramMode === 'polling' ? 'disabled' : 'webhook' };
-    const server = createBridgeServer(bridge);
-    const controller = new AbortController();
-    let polling = Promise.resolve();
-    server.listen(8787, '127.0.0.1', () => {
-      console.log('dotg listening on loopback port 8787');
-      if (poller) {
-        polling = poller.run(controller.signal).catch(() => { console.error('dotg polling stopped; operator inspection required'); });
-      }
-    });
-    let stopping = false;
-    const stop = () => {
-      if (stopping) return;
-      stopping = true;
-      controller.abort();
-      Promise.all([polling, closeBridgeServer(server)]).then(() => {
-        store.close(); closeSync(fd); unlinkSync(lock);
-      }).catch(() => { console.error('dotg shutdown incomplete; runtime lock retained'); process.exitCode = 1; });
-    };
-    process.on('SIGTERM', stop);
-    process.on('SIGINT', stop);
-  } catch { console.error('dotg startup failed; check private configuration and runtime lock'); process.exitCode = 1; }
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  void runStandalone({ createBridgeServer, closeBridgeServer });
 }

@@ -56,7 +56,7 @@ The optional webhook route additionally requires `telegramWebhookSecret`; do not
 npm start
 ```
 
-The backend binds `127.0.0.1:8787`. Default private storage is `runtime/dotg.sqlite`. `DOTG_CONFIG` and `DOTG_DATABASE` can select paths; they are not secret-value variables. For initial setup use a new installation's database, not another service's data. Existing stored subscriptions may deliver callbacks even while Telegram polling is off.
+The backend binds `127.0.0.1:8787`. `npm start` uses Python 3 to acquire an OS-managed lease before executing Node; direct `node src/server.mjs` is not a supported startup path. Default private storage is `runtime/dotg.sqlite`. `DOTG_CONFIG` and `DOTG_DATABASE` can select paths; they are not secret-value variables. For initial setup use a new installation's database, not another service's data. Existing stored subscriptions may deliver callbacks even while Telegram polling is off.
 
 Verify unauthorized MCP access returns 401 and an authenticated local `get_bridge_status` succeeds. Pass authorization from the protected file in process memory; do not type a token into a command. The polling configuration returns 404 for `/telegram/webhook`. Stop cleanly with SIGTERM, not by deleting a lock.
 

@@ -35,7 +35,7 @@ Paste this into Codex or ChatGPT Work with access to your Mac. Your Agent handle
 
 No public Telegram webhook, domain or inbound port is needed for this Mac route. Messages are processed by Telegram and ChatGPT, with private state stored on your Mac; see [data handling](docs/privacy.md).
 
-The Mac must remain available. Dot's scheduling can add variable delay, and message updates are cumulative chunks rather than token-by-token streaming. Automatic login/reboot startup is not yet implemented.
+The Mac must remain available. Dot's scheduling can add variable delay, and message updates are cumulative chunks rather than token-by-token streaming. An opt-in [macOS login service](docs/service.md) is available; unattended recovery still depends on the owner's Keychain policy and must be tested on the installation.
 
 The private Mac route has passed live discovery, Events subscription, short reply, cumulative edit, successful retry, and backend restart checks. This is a low-volume, single-owner service. Unattended boot/login recovery, every account configuration, and predictable response latency are not established.
 

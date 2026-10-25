@@ -17,7 +17,9 @@ The signing secret is validated as a `whsec_` value with 24-64 decoded bytes. Re
 - `telegram.mjs`: formal `sendMessage`/`editMessageText` writes and native draft/activity requests. No credential-bearing errors or upstream descriptions escape this boundary.
 - `activity.mjs`: bounded ephemeral queued/processing feedback, independent of durable replies; failures and rate limits do not block formal answers.
 - `delivery.mjs`: coalesced single-flight callback delivery, independent of the HTTP operation queue and drained on shutdown.
-- `server.mjs`: loopback HTTP server, bearer authentication, bounded input, serialized RPC operations and a single-process runtime lock. Arbitrary Sites identity headers are not trusted by this standalone server.
+- `server.mjs`: loopback HTTP server, bearer authentication, bounded input and serialized RPC operations. Arbitrary Sites identity headers are not trusted by this standalone server.
+- `runtime.mjs` and `scripts/run-backend.py`: standalone lifecycle and an OS-held database lease inherited across exec. The lease file is never unlinked; process exit releases the kernel lock, including after a crash. Legacy existence locks block startup until the prior backend is stopped cleanly.
+- `scripts/service.py`: opt-in per-user macOS jobs from a strict private installation record. Background Tunnel credential access never prompts or changes Keychain policy. Service state and actual readiness are separate checks.
 - `config.mjs`: shared private configuration validation for the server and local operator tools.
 - `diagnostics.mjs`: owner/allowlist-scoped aggregate delivery stages and bounded recent latency samples; it does not change state or expose message content.
 - `doctor.mjs`: read-only loopback discovery and readiness checks with fixed, actionable output. Polling health is reported by the actual poller, independently of HTTP availability. No diagnostic command creates subscriptions, reads Keychain or attempts a repair.
