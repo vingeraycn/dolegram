@@ -25,7 +25,7 @@ The configuration helper generates an independent bearer when omitted. The macOS
 
 The read-only `npm run doctor` command distinguishes local backend discovery, configured Tunnel health, consumer health, subscription coverage and delivery/reply stages. It does not claim real host discovery or fresh end-to-end acceptance. The service manager uses a versioned private installation record for paths and lifecycle settings, alongside the Agent's evidence note.
 
-An opt-in [macOS service manager](service.md), crash-safe runtime lease and noninteractive background Keychain launcher are implemented. Complete live service handover and login/reboot/locked-Keychain acceptance before claiming unattended operation. No secret is bundled into a launchd plist and no Keychain access is silently approved.
+An opt-in [macOS service manager](service.md), crash-safe runtime lease and noninteractive background Keychain launcher are implemented. Live backend/Tunnel handover and automatic recovery from a controlled Tunnel crash passed on one installation, followed by real Telegram replies and cumulative edits. Login/reboot/locked-Keychain acceptance remains separate before claiming unattended operation. No secret is bundled into a launchd plist and no Keychain access is silently approved.
 
 The launcher provides exact-item access preflight without starting a client. Check background access before replacing a working Tunnel; when unavailable, preserve the current connection and explain the owner-controlled access requirement. Foreground approval and unattended access are distinct evidence levels.
 

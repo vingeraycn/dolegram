@@ -52,6 +52,16 @@ runtime/dotg-keychain-launcher --authorize-access /ABSOLUTE/PATH/launcher.local.
 
 This reads only the configured item and permits the owner-controlled system prompt; it still never starts a client. The Agent must not operate the prompt or change the item's access policy. A one-time Allow may not authorize later background reads. After the owner responds, repeat `--check-access` as a new process. If it still fails, preserve the existing policy and report that unattended startup is unavailable. Persistently trusting the dedicated executable is a separate owner decision, not implied by one-time read approval. Never enable access for all applications.
 
+### If Always Allow still fails
+
+Do not repeatedly ask the owner to approve the same prompt. The traditional login Keychain can apply both an application trust list and a separate code-signature partition ACL. In a verified installation, the dedicated launcher appeared in the trust list while the partition ACL still contained only `apple:`. Its ad-hoc signature uses a `cdhash:` identity, so foreground approval alone did not establish noninteractive access.
+
+Diagnose only the configured item: inspect access metadata using an exact service/account lookup with `kSecReturnRef`, never a password dump or an enumeration of unrelated items. Check the actual signed binary at its final path and repeat the noninteractive preflight. See Apple's [process partition identity implementation](https://github.com/apple-oss-distributions/Security/blob/main/securityd/src/clientid.cpp).
+
+Any persistent policy repair requires the owner's specific approval. When an exact-build grant is appropriate, preserve the existing partitions and application trust list and add only the reviewed launcher's code hash to that one item. Apple's `security set-generic-password-partition-list` supports exact service/account and keychain selection; inspect the installed help first. Omit its deprecated password argument so the owner enters the Keychain password directly into the official tool. Never collect that password in chat, a custom input, a command argument, an environment variable or a file. Respect any tool-specific prohibition on Terminal or system authorization automation; the owner must complete such a handoff themselves.
+
+Prepare the exact repair and rollback privately, verify the binary hash and current policy before applying it, and verify a new `--check-access` process afterward. Do not substitute broad `unsigned:`, all-app access or an unrelated signing identity. A rebuilt ad-hoc binary has a different hash and may need a new explicit grant; preserve the approved binary across unrelated backend upgrades. This repair passed background launch and controlled Tunnel crash recovery in one installation, but does not prove access after locking Keychain, logout or reboot.
+
 After successful preflight and an authorized sole-client handover, run:
 
 ```sh
