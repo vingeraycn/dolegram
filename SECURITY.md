@@ -1,5 +1,7 @@
 # Security
 
+See [data handling](docs/privacy.md) for destinations, storage, retention and publication privacy. A private local backend does not mean conversation data stays entirely on the Mac.
+
 ## Credential and data boundaries
 
 - Bind the backend and client health/admin listeners to loopback. A private Tunnel connection is not a public ingress URL.

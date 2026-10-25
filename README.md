@@ -11,11 +11,13 @@ No public Telegram webhook, domain, or inbound port is needed for the preferred 
 
 ## Install with your Agent
 
-Give this sentence to an Agent that can work on your Mac:
+In Codex or ChatGPT Work with access to your Mac, give the Agent this sentence:
 
-> Read https://github.com/vingeraycn/dotg/blob/main/INSTALL.md and install and configure dotg on my Mac to connect my Telegram Bot to my existing Dot; reuse authorized local resources, protect credentials, complete a safe consumer handover and real reply/edit verification, and ask me only for missing choices or actions that genuinely require me.
+> Read https://github.com/vingeraycn/dotg/blob/main/docs/desktop-install.md and install dotg on this Mac for my Telegram Bot and existing Dot; first explain which actions require me, then use local tools and Computer Use to complete setup, reuse existing resources, protect secrets, preserve rollback, and verify a real reply and in-place edits.
 
 The Agent follows a resumable guide: inspect → configure → connect → verify → hand over. This is an installation prompt, not a shell command or a promise to bypass account permissions or macOS security prompts. The repository is currently private; read access is required. Publication and an open-source license are still pending.
+
+Before setup, the Agent explains any required account login, Bot/account choice, protected credential entry, system authorization or manual Telegram test. It continues after each required action. The Mac must remain available; automatic login/reboot startup is not yet implemented. See the [desktop guide](docs/desktop-install.md) and [data handling](docs/privacy.md).
 
 ## What you get
 
@@ -32,11 +34,13 @@ The private Mac route has passed live discovery, Events subscription, short repl
 
 | Goal | Guide |
 | --- | --- |
+| Start from Codex or ChatGPT desktop | [Desktop Agent installation](docs/desktop-install.md) |
 | Install or resume with an Agent | [INSTALL.md](INSTALL.md) |
 | Connect the private Tunnel | [TUNNEL.md](TUNNEL.md) |
 | Configure the Dot event handler | [Dot task instructions](docs/dot-task.md) |
 | Inspect, restart, recover, or roll back | [OPERATIONS.md](OPERATIONS.md) |
 | Understand security and reporting | [SECURITY.md](SECURITY.md) |
+| Understand message storage and privacy | [Data handling](docs/privacy.md) |
 | Contribute and run checks | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Prepare the public release | [Release readiness](docs/release-readiness.md) |
 | Understand design and provenance | [ARCHITECTURE.md](ARCHITECTURE.md), [SOURCE_STATUS.md](SOURCE_STATUS.md) |

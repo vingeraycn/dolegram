@@ -2,6 +2,8 @@
 
 Read README.md and INSTALL.md before installation work; read ARCHITECTURE.md and CONTRIBUTING.md before implementation work. Keep repository content in English and communicate in the owner's preferred language.
 
+For desktop installation, read docs/desktop-install.md first. Check actual local capabilities and explain required owner participation before creating resources. Use docs/privacy.md to explain message destinations and storage accurately.
+
 - Inspect and preserve existing changes, running services, credentials and private connections. Resume matching resources instead of rebuilding them.
 - Use synthetic configuration and isolated databases for tests. Never print secrets or open the application's Store on a live database for read-only inspection.
 - Keep one Telegram consumer. Verify actual host discovery and signed Events subscription before handing over intake. Preserve the old consumer and rollback.

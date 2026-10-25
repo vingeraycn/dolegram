@@ -1,5 +1,7 @@
 # Install dotg with an Agent
 
+For Codex or ChatGPT desktop, start with [Desktop Agent installation](docs/desktop-install.md): check actual local capabilities and explain necessary owner participation first. Return here for the installation procedure.
+
 This guide is for an Agent operating on the owner's Mac. Complete the authorized work; do not turn executable setup into a checklist for the user. Resume verified resources instead of rebuilding them. Use the preferred local browser when account UI is necessary, and respect the active execution environment's actual permissions.
 
 ## Outcome and boundaries
