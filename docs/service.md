@@ -35,7 +35,9 @@ The Tunnel job requires the [current launcher template](keychain.md), including 
 
 Background mode disables optional Keychain interaction in that process. A locked Keychain, missing item, denied access, or a policy requiring confirmation can prevent startup. No access policy is changed and no system prompt is automated. Pre-client failure exits with code 78; job status reports fixed guidance without raw errors or credential values. launchd retries unsuccessful exits with a minimum 60-second throttle and without authorization popups. The owner's existing confirmation policy can therefore prevent fully unattended recovery. Report that limitation rather than widening Keychain access silently.
 
-To authorize a foreground test, first unload the Tunnel job and verify all previous clients have stopped. Run the approved launcher's `--run` command and let the owner handle any actual system prompt. Stop the foreground client before restarting the job. One-time approval does not establish future background access; test it explicitly.
+Use the approved launcher's `--check-access` before stopping a working client. It checks the same credential reads without prompting or starting another client. If necessary, `--authorize-access` permits the owner-controlled foreground prompt while still leaving the client alone. Repeat `--check-access` in a new process afterward: a one-time approval does not establish future background access. See [exact-item preflight](keychain.md). Do not widen access policy to make this check pass without a separate owner decision.
+
+A full foreground client test is different: first unload the Tunnel job and verify all previous clients have stopped, then run `--run`. Stop that foreground client before restarting the job. Neither credential preflight nor a foreground run proves login/reboot recovery.
 
 ## Install and hand over
 

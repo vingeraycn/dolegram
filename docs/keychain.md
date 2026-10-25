@@ -36,7 +36,23 @@ Create an ignored `launcher.local.json` with mode 0600. The following is a schem
 }
 ```
 
-Run the compiled launcher only after its exact item access and destination are authorized:
+After exact-item access and the destination are authorized, check the compiled launcher without stopping a working client:
+
+```sh
+runtime/dotg-keychain-launcher --check-access /ABSOLUTE/PATH/launcher.local.json
+```
+
+This mode disables optional Keychain prompts, validates the same configuration and credential reads as a real launch, and exits without starting a client or contacting the control plane. Success confirms access at that moment only; it does not prove access after login, reboot, locking or an executable update. Failure leaves the working client intact and returns fixed guidance with exit code 78.
+
+If foreground authorization is needed, use the same binary at its final installation path:
+
+```sh
+runtime/dotg-keychain-launcher --authorize-access /ABSOLUTE/PATH/launcher.local.json
+```
+
+This reads only the configured item and permits the owner-controlled system prompt; it still never starts a client. The Agent must not operate the prompt or change the item's access policy. A one-time Allow may not authorize later background reads. After the owner responds, repeat `--check-access` as a new process. If it still fails, preserve the existing policy and report that unattended startup is unavailable. Persistently trusting the dedicated executable is a separate owner decision, not implied by one-time read approval. Never enable access for all applications.
+
+After successful preflight and an authorized sole-client handover, run:
 
 ```sh
 runtime/dotg-keychain-launcher --run /ABSOLUTE/PATH/launcher.local.json

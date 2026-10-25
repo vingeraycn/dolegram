@@ -12,7 +12,21 @@ struct Settings: Decodable {
     let tunnelID: String
 }
 
-enum LaunchFailure: Error { case unavailable, invalid, testFailed }
+enum LaunchFailure: Error { case unavailable, keychainUnavailable, invalid, testFailed }
+
+enum Command: String, CaseIterable {
+    case run = "--run", background = "--run-background"
+    case checkAccess = "--check-access", authorizeAccess = "--authorize-access"
+
+    var background: Bool { self == .background || self == .checkAccess }
+    var startsClient: Bool { self == .run || self == .background }
+}
+
+func perform(_ command: Command, prepare: (Bool) throws -> [String: String],
+             execute: ([String: String]) throws -> Void) throws {
+    let env = try prepare(command.background)
+    if command.startsClient { try execute(env) }
+}
 
 func privateFile(_ path: String) throws -> Data {
     let fd = open(path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK)
@@ -45,7 +59,7 @@ func validate(_ settings: Settings) throws {
 func readItem(_ settings: Settings) throws -> Data {
     var keychain: SecKeychain?
     guard SecKeychainOpen(NSHomeDirectory() + "/Library/Keychains/login.keychain-db", &keychain) == errSecSuccess,
-          let keychain else { throw LaunchFailure.unavailable }
+          let keychain else { throw LaunchFailure.keychainUnavailable }
     let query: [String: Any] = [
         kSecClass as String: kSecClassGenericPassword,
         kSecAttrService as String: settings.keychainService,
@@ -56,7 +70,7 @@ func readItem(_ settings: Settings) throws -> Data {
     ]
     var result: CFTypeRef?
     guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-          let data = result as? Data else { throw LaunchFailure.unavailable }
+          let data = result as? Data else { throw LaunchFailure.keychainUnavailable }
     return data
 }
 
@@ -94,7 +108,7 @@ func configureInteraction(background: Bool) throws {
     }
 }
 
-func launch(_ settings: Settings, background: Bool = false) throws {
+func preparedEnvironment(_ settings: Settings, background: Bool) throws -> [String: String] {
     try validate(settings)
     try configureInteraction(background: background)
     let executable = settings.runtimeDirectory + "/bin/tunnel-client"
@@ -105,13 +119,17 @@ func launch(_ settings: Settings, background: Bool = false) throws {
           lstat(executable, &metadata) == 0, metadata.st_mode & S_IFMT == S_IFREG,
           metadata.st_mode & 0o022 == 0, metadata.st_uid == getuid(),
           access(executable, X_OK) == 0 else { throw LaunchFailure.invalid }
-    let env = try environment(readKey: { try readItem(settings) }, readBearer: {
+    return try environment(readKey: { try readItem(settings) }, readBearer: {
         let object = try JSONSerialization.jsonObject(with: privateFile(settings.backendConfig))
         guard let config = object as? [String: Any], let bearer = config["mcpBearerToken"] as? String else {
             throw LaunchFailure.invalid
         }
         return bearer
     })
+}
+
+func launch(_ settings: Settings, environment env: [String: String]) throws {
+    let executable = settings.runtimeDirectory + "/bin/tunnel-client"
     guard chdir(settings.runtimeDirectory) == 0 else { throw LaunchFailure.unavailable }
     // exec preserves the PID and normal signal semantics: no orphan child on stop.
     let argv = ([executable] + arguments(settings)).map { strdup($0) } + [nil]
@@ -164,20 +182,49 @@ func selfTest() throws {
         _ = try environment(readKey: { throw LaunchFailure.unavailable }, readBearer: { bearer })
         throw LaunchFailure.testFailed
     } catch LaunchFailure.unavailable { }
-    print("PASS: exact environment, secret-free arguments, background interaction disabled, invalid input and denied-read handling; no Keychain access or process launch.")
+    for command in Command.allCases {
+        var prepared = 0, executions = 0
+        try perform(command, prepare: { background in
+            prepared += 1
+            guard background == [Command.background, .checkAccess].contains(command) else { throw LaunchFailure.testFailed }
+            return env
+        }, execute: { value in
+            guard value == env else { throw LaunchFailure.testFailed }
+            executions += 1
+        })
+        guard prepared == 1, executions == ([Command.run, .background].contains(command) ? 1 : 0) else {
+            throw LaunchFailure.testFailed
+        }
+        do {
+            try perform(command, prepare: { _ in throw LaunchFailure.keychainUnavailable }, execute: { _ in
+                throw LaunchFailure.testFailed
+            })
+            throw LaunchFailure.testFailed
+        } catch LaunchFailure.keychainUnavailable { }
+    }
+    print("PASS: exact environment, secret-free arguments, background interaction disabled, preflight never launches, invalid input and denied-read handling; no Keychain access or process launch.")
 }
 
 do {
     let args = Array(CommandLine.arguments.dropFirst())
     if args == ["--self-test"] {
         try selfTest()
-    } else if args.count == 2 && ["--run", "--run-background"].contains(args[0]) {
+    } else if args.count == 2, let command = Command(rawValue: args[0]) {
         let settings = try JSONDecoder().decode(Settings.self, from: privateFile(args[1]))
-        try launch(settings, background: args[0] == "--run-background")
+        // Preflight uses the same reads without replacing a working client.
+        // Only the explicit foreground commands may prompt.
+        try perform(command, prepare: { try preparedEnvironment(settings, background: $0) },
+                    execute: { try launch(settings, environment: $0) })
+        if !command.startsClient {
+            print("PASS: exact configured credential access and input validation succeeded; no Tunnel client was started. The launcher did not modify Keychain access policy.")
+        }
     } else {
-        fputs("Usage: dotg-keychain-launcher --self-test | (--run | --run-background) /absolute/path/launcher.local.json\n", stderr)
+        fputs("Usage: dotg-keychain-launcher --self-test | (--run | --run-background | --check-access | --authorize-access) /absolute/path/launcher.local.json\n", stderr)
         exit(2)
     }
+} catch LaunchFailure.keychainUnavailable {
+    fputs("dotg launcher cannot access the configured login Keychain item. Check the exact item, unlock state and owner-controlled authorization. No client was started. The launcher did not modify Keychain access policy.\n", stderr)
+    exit(78)
 } catch {
     fputs("dotg launcher failed closed; no secret diagnostics emitted.\n", stderr)
     exit(78)

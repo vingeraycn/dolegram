@@ -27,6 +27,8 @@ The read-only `npm run doctor` command distinguishes local backend discovery, co
 
 An opt-in [macOS service manager](service.md), crash-safe runtime lease and noninteractive background Keychain launcher are implemented. Complete live service handover and login/reboot/locked-Keychain acceptance before claiming unattended operation. No secret is bundled into a launchd plist and no Keychain access is silently approved.
 
+The launcher provides exact-item access preflight without starting a client. Check background access before replacing a working Tunnel; when unavailable, preserve the current connection and explain the owner-controlled access requirement. Foreground approval and unattended access are distinct evidence levels.
+
 For sustained usage, design bounded retention that preserves deduplication and reply recovery, and an explicit operator reconciliation flow for ambiguous writes. Measure local receipt-to-callback and callback-to-read intervals separately before optimizing scheduling; host-internal delays have no established dotg control.
 
 Private [online snapshots and staged recovery](backup.md) are implemented with integrity/checksum verification, bounded copying, exclusive destinations and fresh-subscription startup gates. Restoring a snapshot still requires comparison with newer local and external state; incomplete replies/deliveries cannot be approved automatically. Backup scheduling, owner-approved retention and supported reconciliation remain open. Run production from a versioned release with independent locked dependencies so development edits cannot enter a crash restart.
