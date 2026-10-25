@@ -30,15 +30,17 @@ Use the real host's `get_bridge_status` to check subscription status, received m
 
 ## Clean restart and upgrade
 
-1. Run automated checks on the reviewed source before replacing the running backend. Preserve the previous commit and nonsecret launch configuration.
+1. Run automated checks on the reviewed source. Prepare a separate versioned release directory with its own locked dependencies (`npm ci --ignore-scripts`); preserve the previous release and nonsecret launch configuration. Do not run production from a checkout being edited, or share its mutable `node_modules` directory: an automatic restart could otherwise load unreviewed changes.
 2. Send SIGTERM to the exact dotg backend. It aborts long polling and activity requests, waits for in-flight callback and HTTP work, closes SQLite, and releases its lock.
 3. Verify the process and listener are gone. Current releases use an OS-managed `.lease`; its file remains after exit and must never be deleted. A legacy `.lock` blocks the new launcher until the old backend stops cleanly. Never delete an active lock or start a second poller to force recovery.
-4. Back up the closed database into a private directory with private permissions. It contains messages, callback secrets, and reply state; do not upload it. A live SQLite copy requires SQLite's backup mechanism, not a casual file copy.
+4. Create and verify a [private snapshot](docs/backup.md). The supplied tool also supports an online backup before shutdown; preserve a final snapshot at handover when possible. It contains messages, callback secrets, and reply state; do not upload it. A live SQLite copy requires SQLite's backup mechanism, not a casual file copy.
 5. Start the reviewed backend with the same owner, configuration and database. Retain `DOTG_ENABLE_POLLING=1` only if dotg is the approved consumer. Verify host tool access and perform an authorized real smoke test.
 
 For read-only diagnosis use SQLite read-only mode. Do not instantiate the application's `Store` on a live database: its startup recovery changes pending writes to uncertain. Do not edit production state to make a test pass.
 
-Start through `npm start` or the Python runtime launcher, not direct `node src/server.mjs`. For managed jobs, use the opt-in [macOS login service](docs/service.md) to stop/start the matching component and preserve the old record when changing paths. Stop the backend before replacing source in its checkout. Login, locked-Keychain and network recovery still require installation-specific acceptance before calling the setup unattended.
+Start through `npm start` or the Python runtime launcher, not direct `node src/server.mjs`. For managed jobs, use the opt-in [macOS login service](docs/service.md) to stop/start the matching component and preserve the old record when changing paths. Keep configuration and the database outside the versioned source release. Login, locked-Keychain and network recovery still require installation-specific acceptance before calling the setup unattended.
+
+Restoring an old database is a separate operation from rolling back code. Use [staged recovery](docs/backup.md), compare external outcomes and newer state, and renew signed host subscriptions before resuming intake. Never replace the live database with an old snapshot to undo a deployment.
 
 ## Uncertain writes and partial answers
 

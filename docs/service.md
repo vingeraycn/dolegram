@@ -14,7 +14,7 @@ Have the Agent create an ignored `installation.local.json` with exclusive creati
   "checkout": "/ABSOLUTE/CHECKOUT",
   "nodeExecutable": "/ABSOLUTE/SUPPORTED/NODE",
   "pythonExecutable": "/ABSOLUTE/PYTHON3",
-  "configPath": "/ABSOLUTE/CHECKOUT/config.local.json",
+  "configPath": "/ABSOLUTE/PRIVATE/RUNTIME/config.local.json",
   "databasePath": "/ABSOLUTE/PRIVATE/RUNTIME/backend/dotg.sqlite",
   "runtimeDirectory": "/ABSOLUTE/PRIVATE/RUNTIME",
   "pollingEnabled": true,
@@ -26,6 +26,8 @@ Have the Agent create an ignored `installation.local.json` with exclusive creati
 Replace every placeholder. `pollingEnabled` must match the authorized consumer state; use false before handover. `callbackDnsServers` is optional and preserves an explicitly selected callback resolver. Omit both Tunnel fields when managing only the backend. Unknown fields are refused so credentials cannot accidentally become plist environment values. Keep private runtime directories mode 0700 and configuration/launcher settings mode 0600.
 
 Use stable absolute executable paths, including a supported Node LTS. Shell version managers and interactive shell profiles are not loaded by launchd. A runtime upgrade that removes an executable requires a reviewed record/plist update, not a global runtime change.
+
+Point `checkout` at a tested, versioned source release with its own locked dependencies, not a development checkout or a symlink to mutable dependencies. Prepare it from the reviewed commit and run `npm ci --ignore-scripts` there before handover. Keep private configuration, database and the installation record outside the release directory. Preserve the prior release for rollback; an automatic restart must load the same reviewed source until an explicit upgrade.
 
 ## Keychain behavior
 
@@ -66,7 +68,7 @@ python3 scripts/service.py uninstall --record /ABSOLUTE/PATH/installation.local.
 
 `stop` verifies both the installed plist and loaded job definition, then unloads only the matching job. Its total inspection/shutdown budget is 55 seconds, covering launchd's 45-second exit grace. If exit cannot be confirmed, or no PID was available in the snapshot, inspect the process and listener before starting another consumer. `stop` alone leaves the login plist, so it can run at the next login. `uninstall` requires an unloaded matching job and removes only its plist. The database, credentials, private record and runtime are preserved. Apply the same procedure to the Tunnel when retiring it. Service stdout/stderr are discarded; status and doctor provide bounded diagnostics without raw client logs.
 
-Before changing record paths or job settings, stop and uninstall using the **old** record, keep a private copy of that record, then install from the new one. Before updating source in the running checkout, stop the backend and back up the closed database as described in [OPERATIONS.md](../OPERATIONS.md). Do not update underneath an active process and call it deployed. Restore the previous reviewed source and launch configuration if acceptance fails, with only one consumer active.
+Before changing record paths or job settings, stop and uninstall using the **old** record, keep a private copy of that record, then install from the new one. Upgrade by selecting a new tested release directory in the record after a verified [private snapshot](backup.md), as described in [OPERATIONS.md](../OPERATIONS.md). Do not update underneath an active process and call it deployed. Restore the previous reviewed source and launch configuration if acceptance fails, with only one consumer active. Rolling back source does not authorize rolling back the database or replaying older messages.
 
 The backend starts through `npm start` or `python3 scripts/run-backend.py --node /ABSOLUTE/NODE`. Its OS lease survives exec and is released by the kernel on process exit, including crashes. The `.lease` file remains deliberately: never delete it. Direct `node src/server.mjs` refuses startup without the inherited lease. A pre-lease `.lock` blocks startup; stop that legacy backend cleanly so it releases its own lock. Do not delete a lock as a shortcut.
 

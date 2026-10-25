@@ -18,6 +18,8 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 NODE = shutil.which('node')
+sys.path.insert(0, str(ROOT / 'scripts'))
+import backup
 
 
 def free_port():
@@ -166,6 +168,29 @@ class RuntimeTest(unittest.TestCase):
         self.assertEqual(child.returncode, 1)
         self.assertEqual(target.read_text(), 'preserve')
         self.assertFalse(self.database.exists())
+
+    def test_restored_state_requires_review_then_fresh_subscription_before_polling(self):
+        first = self.start()
+        self.wait_ready(first)
+        first.terminate()
+        first.communicate(timeout=8)
+        snapshot, restored = self.root / 'snapshot', self.root / 'restored'
+        backup.backup(self.database, snapshot)
+        backup.restore(snapshot, restored)
+        env = self.env()
+        env['DOTG_DATABASE'] = str(restored / backup.DATABASE)
+        blocked = self.start(env)
+        blocked.communicate(timeout=5)
+        self.assertEqual(blocked.returncode, 1)
+        backup.approve_restore(restored, True)
+        env['DOTG_ENABLE_POLLING'] = '1'
+        no_subscription = self.start(env)
+        no_subscription.communicate(timeout=5)
+        self.assertEqual(no_subscription.returncode, 1)
+        # No Telegram transport is reached by either refusal. MCP setup can now
+        # run with intake off, without reusing copied callback credentials.
+        env['DOTG_ENABLE_POLLING'] = '0'
+        self.wait_ready(self.start(env))
 
 
 if __name__ == '__main__':

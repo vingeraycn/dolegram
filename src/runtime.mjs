@@ -53,6 +53,16 @@ export async function runStandalone({ createBridgeServer, closeBridgeServer }) {
     const port = Number(process.env.DOTG_PORT ?? 8787);
     if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid loopback port');
     store = new Store(database);
+    const state = store.read();
+    if (state.recovery?.required) throw new Error('Restored state requires offline review');
+    if (state.recovery && config.telegramMode !== 'polling') throw new Error('Staged recovery requires the polling route');
+    if (state.recovery && process.env.DOTG_ENABLE_POLLING === '1') {
+      const fresh = Object.values(state.subscriptions).filter(sub => sub.owner === config.ownerId &&
+        sub.verifiedAt > state.recovery.restoredAt && sub.expiresAt > Date.now());
+      if (!config.allowedChatIds.every(chat => fresh.some(sub => sub.chatId === chat))) {
+        throw new Error('Restored state requires fresh host subscriptions before polling');
+      }
+    }
     const telegram = telegramClient(config.telegramBotToken);
     const activity = new TelegramActivity({ store, config, telegram });
     const bridge = new Bridge({ store, config, telegram, activity,
@@ -74,7 +84,7 @@ export async function runStandalone({ createBridgeServer, closeBridgeServer }) {
     process.on('SIGTERM', stop);
     process.on('SIGINT', stop);
   } catch {
-    console.error('dotg startup failed; use npm start and check private configuration, runtime lease and loopback port');
+    console.error('dotg startup failed; check private configuration, runtime lease, recovery review and loopback port');
     process.exitCode = 1;
     await stop();
   }

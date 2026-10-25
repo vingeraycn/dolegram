@@ -15,7 +15,7 @@ The launcher passes the approved runtime key and upstream bearer in the dedicate
 
 Callback transport validates public HTTPS destinations, rejects redirects, pins DNS results and verifies TLS hostnames. A custom DNS resolver, if configured, receives hostname lookups, not message bodies. Only create subscriptions through the intended host. Backend bearer possession grants privileged access; callback validation does not replace credential protection.
 
-Retention and backups are manual. Keep configuration, database, installation notes and backups out of Git and sharing workflows. Deleting a Telegram conversation does not automatically delete local dotg records. Read [OPERATIONS.md](../OPERATIONS.md) before cleanup that could affect deduplication or reply recovery.
+Retention and backups are manual. The [snapshot tool](backup.md) creates private plaintext database copies containing the same sensitive data; configuration and Keychain credentials are excluded. It never uploads snapshots or silently deletes them. Keep configuration, database, installation notes and backups out of Git and sharing workflows. Deleting a Telegram conversation does not automatically delete local dotg records. Read [OPERATIONS.md](../OPERATIONS.md) before cleanup that could affect deduplication or reply recovery.
 
 ## Before publication
 

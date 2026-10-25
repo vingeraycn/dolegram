@@ -50,6 +50,8 @@ Do not extract browser authentication stores, bypass a denied operation through 
 
 Proceed through inspection and reuse → protected configuration → intake off → real host tools and signed subscription → one-consumer handover → actual replies and edits. Reuse matching connections, Tunnel profiles and subscriptions. Do not create credentials before confirming the destination and account capabilities.
 
+Before enabling managed startup, prepare a tested versioned release with its own locked dependencies; keep private configuration and runtime state outside it. See [service setup](service.md). Create and verify a [private snapshot](backup.md) before upgrades, preserving older evidence without automatic deletion. Do not make the owner perform these local preparation steps when the Agent has authorized tools.
+
 When owner action is required, pause only dependent work and continue safe independent preparation. Resume automatically after the owner acts, checking live state instead of rebuilding completed resources.
 
 ## 3. Leave private checkpoints

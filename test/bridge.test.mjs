@@ -115,6 +115,41 @@ test('callback verification failure never activates a subscription', async t => 
   await assert.rejects(rpc('events/subscribe', subscription({ arguments: { chat_id: '999' } })), /Invalid/);
 });
 
+test('approved snapshot recovery requires a new signed challenge even with the same recent secret', async t => {
+  const directory = mkdtempSync(join(tmpdir(), 'dotg-recovery-test-'));
+  let recovered;
+  t.after(() => { recovered?.close(); rmSync(directory, { recursive: true, force: true }); });
+  const source = join(directory, 'source.sqlite');
+  const snapshot = join(directory, 'snapshot');
+  const restored = join(directory, 'restored');
+  const original = new Store(source);
+  const posts = [];
+  const post = async (url, body, signedHeaders) => {
+    const value = new Webhook(signingSecret).verify(body, signedHeaders);
+    posts.push(value);
+    return { status: 200, body: JSON.stringify({ challenge: value.challenge }) };
+  };
+  try {
+    const bridge = new Bridge({ store: original, config, telegram: async () => { throw new Error('No Telegram writes allowed'); }, post });
+    await bridge.rpc({ jsonrpc: '2.0', id: 1, method: 'events/subscribe', params: subscription() }, headers);
+  } finally { original.close(); }
+  const run = args => execFileSync('python3', ['scripts/backup.py', ...args], { timeout: 10000 });
+  run(['create', '--database', source, '--destination', snapshot]);
+  run(['restore', '--snapshot', snapshot, '--destination', restored]);
+  run(['approve-restore', '--directory', restored, '--reviewed-external-state']);
+  recovered = new Store(join(restored, 'state.sqlite'));
+  const state = recovered.read();
+  assert.equal(Object.values(state.subscriptions)[0].verifiedAt, 0);
+  const now = Math.max(Date.now(), state.recovery.restoredAt + 1);
+  const bridge = new Bridge({ store: recovered, config, telegram: async () => { throw new Error('No Telegram writes allowed'); }, post, now: () => now });
+  await bridge.rpc({ jsonrpc: '2.0', id: 1, method: 'events/subscribe', params: subscription() }, headers);
+  assert.equal(posts.length, 2, 'recovery must not reuse the original verification cache');
+  assert.notEqual(posts[0].challenge, posts[1].challenge);
+  const renewed = Object.values(recovered.read().subscriptions)[0];
+  assert.ok(renewed.verifiedAt > state.recovery.restoredAt);
+  assert.ok(renewed.expiresAt > now);
+});
+
 test('private allowlist, replay age and duplicate update enforcement', async t => {
   const { bridge, rpc, posts, store } = fixture(t);
   await rpc('events/subscribe', subscription());

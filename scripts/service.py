@@ -83,7 +83,7 @@ def verify_files(record, component):
         if not stat.S_ISREG(info.st_mode) or info.st_uid not in [0, os.getuid()] or stat.S_IMODE(info.st_mode) & 0o022 or not os.access(path, os.X_OK):
             raise ServiceError('Executable must be owned by this user or root, executable, and not writable by others.')
     if component == 'backend':
-        for name in ['scripts/run-backend.py', 'scripts/check-runtime.mjs', 'src/server.mjs']:
+        for name in ['scripts/run-backend.py', 'scripts/runtime_lease.py', 'scripts/check-runtime.mjs', 'src/server.mjs']:
             info = (Path(record['checkout']) / name).stat()
             if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o022:
                 raise ServiceError('Checkout entry points must be owned by this user and not writable by others.')
