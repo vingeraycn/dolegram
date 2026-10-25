@@ -11,7 +11,7 @@ npm test
 npm run build:sites
 ```
 
-The build emits a bundled ESM Worker at `dist/sites/server/index.js`. It is a source artifact, not a deployable Site publication: no hosting manifest, real project ID, bindings, credentials or access policy is fabricated. The bundle's only external module is the documented Workers-compatible `node:crypto`; the eventual Sites build must enable Node compatibility as required by the selected official starter. These checks are not a hosted Worker or D1 acceptance test.
+The build emits a bundled ESM Worker at `dist/sites/server/index.js`, with `LICENSE` and `THIRD_PARTY_NOTICES.md` alongside it; retain both notices when redistributing the output. It is a source artifact, not a deployable Site publication: no hosting manifest, real project ID, bindings, credentials or access policy is fabricated. The bundle's only external module is the documented Workers-compatible `node:crypto`; the eventual Sites build must enable Node compatibility as required by the selected official starter. These checks are not a hosted Worker or D1 acceptance test.
 
 ## Implemented boundaries
 

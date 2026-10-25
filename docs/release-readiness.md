@@ -14,7 +14,7 @@ The configuration helper generates an independent bearer when omitted. The macOS
 
 ## Required before changing visibility
 
-- The owner selected MIT and the [license](../LICENSE) is present. Verify third-party license notices and branding provenance before release; the project license does not grant third-party trademark rights.
+- The owner selected MIT and the [license](../LICENSE) is present. [Third-party notices](../THIRD_PARTY_NOTICES.md) cover all four locked production dependencies and accompany the Sites bundle. Recheck this inventory on dependency changes and verify branding provenance before release; the project license does not grant third-party trademark rights.
 - Repeat the privacy audit of history, releases, attachments, issues and CI logs before publication. An owner-authorized rewrite removed identified private development references and personal email addresses from reachable history. Old commits remained accessible to the authenticated owner through GitHub by SHA after the rewrite; service-side cache/object removal remains separate and is not claimed. The owner chose not to pursue further history/cache cleanup. Preserve the completed rewrite and do not merge or push pre-cleanup clones back into the repository; prioritize preventing new secret or private-data exposure.
 - Perform a clean-room installation using a different approved account/Bot and only the published guide. Record which steps required the owner and resolve unclear steps. Current-owner acceptance does not prove universal installability.
 - Verify current official Tunnel client versions/checksums and host feature availability. Keep the placeholder package noninstallable. Do not invent public distribution support for private Tunnel connections.

@@ -20,3 +20,5 @@ On macOS, also compile and run the launcher self-test described in [docs/keychai
 Preserve authorization, deduplication, reply revisions, uncertain-write blocking, callback SSRF checks, single-consumer handover, and graceful shutdown. Add regression coverage for behavioral fixes. Avoid generic abstractions or migrations without a concrete problem. The Sites alternative has distinct limitations; do not assume parity with the Node backend.
 
 Before committing, review the complete diff, staged paths, generated files and history being pushed for secrets and private identifiers. Ignore rules are not proof of absence. Run `git diff --check`. Changes to credential handling, event contracts, or lifecycle behavior require explicit review of failure paths and a rollback description.
+
+When changing runtime dependencies, update [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for direct and transitive packages against the lockfile and upstream license texts. The Sites build copies these notices and dotg's license beside its bundle; retain both when redistributing that output.

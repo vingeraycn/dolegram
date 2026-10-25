@@ -56,4 +56,4 @@ The private Mac route has passed live discovery, Events subscription, short repl
 
 The [portable plugin template](PLUGIN.md) is for a separately hosted HTTPS backend. Its placeholder is deliberately not installable and is not a Tunnel package. The [Sites adapter](sites/README.md) is source-only with production callback delivery disabled; it is not the supported onboarding route.
 
-Licensed under [MIT](LICENSE). dotg is an independent project and is not affiliated with OpenAI or Telegram. Third-party names and marks remain the property of their respective owners.
+Licensed under [MIT](LICENSE), with [third-party notices](THIRD_PARTY_NOTICES.md) for runtime dependencies. dotg is an independent project and is not affiliated with OpenAI or Telegram. Third-party names and marks remain the property of their respective owners.
