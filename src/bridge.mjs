@@ -10,12 +10,14 @@ export class RpcFailure extends Error {
 const invalid = () => { throw new RpcFailure(-32602, 'Invalid arguments'); };
 
 export class Bridge {
-  constructor({ store, config, telegram, post = callbackPost, now = Date.now }) {
+  constructor({ store, config, telegram, post = callbackPost, now = Date.now, activity = null }) {
     this.store = store;
     this.config = config;
     this.telegram = telegram;
     this.post = post;
     this.now = now;
+    this.activity = activity;
+    this.onAccepted = () => {};
   }
   allowed(chat) { return this.config.allowedChatIds.includes(chat); }
   principal(headers) {
@@ -48,7 +50,7 @@ export class Bridge {
     const identity = JSON.stringify([owner, delivery.url, EVENT_NAME, params.arguments.chat_id]);
     const id = `sub_${createHash('sha256').update(identity).digest('hex')}`;
     const previous = this.store.read().subscriptions[id];
-    const subscription = { id, owner, chatId: params.arguments.chat_id, url: delivery.url, secret: delivery.secret,
+    const subscription = { id, generation: randomUUID(), owner, chatId: params.arguments.chat_id, url: delivery.url, secret: delivery.secret,
       expiresAt: this.now() + Math.min(params.ttlMs ?? 86400000, 86400000) };
     if (previous?.secret === subscription.secret && previous.rotationUntil > this.now()) {
       Object.assign(subscription, { previousSecret: previous.previousSecret, rotationUntil: previous.rotationUntil });
@@ -113,9 +115,9 @@ export class Bridge {
     const age = this.now() - message.date * 1000;
     if (age < -60000 || age > 86400000) return { ignored: true };
     const messageKey = `telegram_${update.update_id}`;
-    return this.store.mutate(state => {
+    const result = this.store.mutate(state => {
       if (state.messages[messageKey]) return { duplicate: true };
-      state.messages[messageKey] = { owner: this.config.ownerId, messageKey, chatId: String(message.chat.id), messageId: message.message_id, text: message.text, reply: null };
+      state.messages[messageKey] = { owner: this.config.ownerId, messageKey, chatId: String(message.chat.id), messageId: message.message_id, text: message.text, receivedAt: this.now(), reply: null };
       for (const sub of Object.values(state.subscriptions)) {
         if (sub.owner !== this.config.ownerId || sub.expiresAt <= this.now() || sub.chatId !== String(message.chat.id)) continue;
         const eventId = `evt_${update.update_id}_${sub.id}`;
@@ -125,9 +127,12 @@ export class Bridge {
       }
       return { accepted: true };
     });
+    if (result.accepted) { this.activity?.poke(); this.onAccepted(); }
+    return result;
   }
-  async deliver() {
+  async deliver({ shouldStop = () => false } = {}) {
     for (const [id, delivery] of Object.entries(this.store.read().deliveries)) {
+      if (shouldStop()) break;
       if (delivery.nextAt > this.now() || delivery.done) continue;
       const sub = this.store.read().subscriptions[delivery.subscriptionId];
       if (!sub || sub.owner !== this.config.ownerId || sub.expiresAt <= this.now() || !this.allowed(sub.chatId)) {
@@ -137,21 +142,42 @@ export class Bridge {
       try { status = (await this.signedPost(sub, delivery.event, id)).status; } catch { /* Retry without retaining callback errors or URLs in logs. */ }
       this.store.mutate(state => {
         const item = state.deliveries[id];
+        if (!item || item.done) return;
         item.attempts += 1;
-        item.done = (status >= 200 && status < 300) || [410, 413].includes(status) || (status >= 400 && status < 500 && ![408, 429].includes(status)) || item.attempts >= 6;
+        item.lastStatus = status;
+        item.lastAttemptAt = this.now();
+        if (status >= 200 && status < 300) item.acceptedAt = this.now();
+        const current = state.subscriptions[sub.id];
+        const unchanged = current?.generation === sub.generation && current?.secret === sub.secret && current?.expiresAt === sub.expiresAt && current?.verifiedAt === sub.verifiedAt;
+        const terminal = status >= 400 && status < 500 && ![408, 429].includes(status);
+        item.done = (status >= 200 && status < 300) || (terminal && unchanged) || item.attempts >= 6;
         item.nextAt = this.now() + Math.min(60000, 1000 * 2 ** item.attempts);
-        if (status === 410) delete state.subscriptions[sub.id];
+        if (status === 410 && unchanged) delete state.subscriptions[sub.id];
       });
     }
   }
   async callTool(name, args) {
     const state = this.store.read();
-    if (name === 'get_bridge_status') return { source: 'reimplementation', messages: Object.values(state.messages).filter(message => message.owner === this.config.ownerId).length,
+    if (name === 'get_bridge_status') return { source: 'reimplementation', activity: this.activity?.status(), messages: Object.values(state.messages).filter(message => message.owner === this.config.ownerId).length,
+      awaitingReplies: Object.values(state.messages).filter(message => message.owner === this.config.ownerId && !(message.reply?.final && message.reply.status === 'sent')).length,
+      pending_messages: Object.values(state.messages)
+        .filter(message => message.owner === this.config.ownerId && this.allowed(message.chatId) &&
+          (!message.reply || (message.reply.status === 'sent' && !message.reply.final)))
+        .sort((a, b) => (a.receivedAt ?? 0) - (b.receivedAt ?? 0))
+        .slice(0, 8)
+        .map(message => ({ message_key: message.messageKey, received_at: message.receivedAt ?? null })),
       subscriptions: Object.values(state.subscriptions).filter(sub => sub.expiresAt > this.now() && sub.owner === this.config.ownerId && this.allowed(sub.chatId)).length,
       uncertainReplies: Object.values(state.messages).filter(message => message.owner === this.config.ownerId && message.reply?.status === 'uncertain').length };
     const message = state.messages[args.message_key];
     if (!message || message.owner !== this.config.ownerId || !this.allowed(message.chatId)) throw new RpcFailure(-32602, 'Message unavailable');
-    if (name === 'read_telegram_message') return { ...message, reply: message.reply && { revision: message.reply.revision, status: message.reply.status, final: message.reply.final } };
+    if (name === 'read_telegram_message') {
+      if (!message.readAt) this.store.mutate(current => { current.messages[args.message_key].readAt = this.now(); });
+      this.activity?.poke();
+      return { ...this.store.read().messages[args.message_key], reply: message.reply && {
+        revision: message.reply.revision, status: message.reply.status, final: message.reply.final,
+        text: message.reply.text, messageId: message.reply.messageId,
+      } };
+    }
     const previous = message.reply;
     const retrySame = previous?.revision === args.revision && previous?.text === args.text && previous?.final === args.final;
     if (retrySame && previous.status === 'sent') return { message_id: previous.messageId, revision: previous.revision, final: previous.final };
@@ -165,6 +191,7 @@ export class Bridge {
     const pending = { revision: args.revision, text: args.text, final: args.final, messageId: previous?.messageId, status: 'pending' };
     // Persist intent before the external write. A crash leaves a blocked, uncertain operation.
     this.store.mutate(current => { current.messages[args.message_key].reply = pending; });
+    await this.activity?.beforeReply(message.chatId);
     try {
       const params = { chat_id: message.chatId, text: args.text };
       const method = previous ? 'editMessageText' : 'sendMessage';
@@ -173,7 +200,11 @@ export class Bridge {
       const result = await this.telegram(method, params);
       const messageId = result?.message_id ?? previous?.messageId;
       if (!Number.isSafeInteger(messageId)) throw new TelegramFailure('uncertain');
-      this.store.mutate(current => { current.messages[args.message_key].reply = { ...pending, messageId, status: 'sent' }; });
+      this.store.mutate(current => {
+        const item = current.messages[args.message_key];
+        item.firstReplyAt ??= this.now();
+        item.reply = { ...pending, messageId, status: 'sent', sentAt: this.now() };
+      });
       return { message_id: messageId, revision: args.revision, final: args.final };
     } catch (error) {
       const safeRetry = error instanceof TelegramFailure && ['rate_limit', 'rejected'].includes(error.code);
@@ -182,6 +213,8 @@ export class Bridge {
         if (safeRetry) current.messages[args.message_key].retryAt = this.now() + (error.retryAfter || 1) * 1000;
       });
       throw new RpcFailure(-32603, safeRetry ? 'Telegram rejected the write; retry only after any rate limit' : 'Reply outcome uncertain; do not resend automatically');
+    } finally {
+      this.activity?.afterReply(message.chatId);
     }
   }
 }

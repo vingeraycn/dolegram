@@ -2,6 +2,7 @@ import test from 'node:test';
 import https from 'node:https';
 import http from 'node:http';
 import { EventEmitter } from 'node:events';
+import { Resolver, getServers } from 'node:dns/promises';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
@@ -12,9 +13,9 @@ import { Webhook } from 'standardwebhooks';
 import { Bridge } from '../src/bridge.mjs';
 import { Store } from '../src/store.mjs';
 import { EVENT_NAME } from '../src/contracts.mjs';
-import { publicAddress, callbackPost } from '../src/security.mjs';
+import { publicAddress, callbackPost, callbackResolver } from '../src/security.mjs';
 import { telegramClient, TelegramFailure } from '../src/telegram.mjs';
-import { createBridgeServer } from '../src/server.mjs';
+import { createBridgeServer, closeBridgeServer } from '../src/server.mjs';
 
 const config = { ownerId: 'test-owner', allowedChatIds: ['123'], mcpBearerToken: 'test-mcp-secret', telegramWebhookSecret: 'test-webhook-secret' };
 const headers = { authorization: `Bearer ${config.mcpBearerToken}` };
@@ -44,6 +45,50 @@ test('official discovery and authenticated schemas', async t => {
   assert.equal((await rpc('events/list')).events[0].name, EVENT_NAME);
   assert.equal((await rpc('tools/list')).tools.length, 4);
   await assert.rejects(rpc('tools/call', { name: 'read_telegram_message', arguments: { message_key: 'x', extra: true } }), /Invalid/);
+});
+
+test('latency evidence distinguishes receipt, callback acceptance, first read and first reply', async t => {
+  let now = Date.now();
+  const { bridge, rpc, store } = fixture(t, { now: () => now });
+  await rpc('events/subscribe', subscription());
+  bridge.receive(update(), config.telegramWebhookSecret);
+  const received = now;
+  now += 10;
+  await bridge.deliver();
+  assert.equal(Object.values(store.read().deliveries)[0].acceptedAt, now);
+  assert.equal(Object.values(store.read().deliveries)[0].lastStatus, 200);
+  now += 10000;
+  await bridge.callTool('read_telegram_message', { message_key: 'telegram_1' });
+  const read = now;
+  now += 100;
+  await bridge.callTool('read_telegram_message', { message_key: 'telegram_1' });
+  const reply = { message_key: 'telegram_1', revision: 1, final: true, text: 'Hello.' };
+  await bridge.callTool('reply_telegram_message', reply);
+  const sent = now;
+  now += 500;
+  await bridge.callTool('reply_telegram_message', reply);
+  const message = store.read().messages.telegram_1;
+  assert.equal(message.receivedAt, received);
+  assert.equal(message.readAt, read);
+  assert.equal(message.firstReplyAt, sent);
+});
+
+test('pending recovery is bounded, authorized and excludes final or uncertain writes', async t => {
+  const { bridge, store } = fixture(t);
+  for (let id = 1; id <= 12; id++) bridge.receive(update(id), config.telegramWebhookSecret);
+  store.mutate(state => {
+    state.messages.telegram_1.reply = { status: 'sent', final: true };
+    state.messages.telegram_2.reply = { status: 'uncertain', final: false };
+    state.messages.telegram_3.reply = { status: 'pending', final: false };
+    state.messages.telegram_4.owner = 'another-owner';
+    state.messages.telegram_5.chatId = '999';
+    state.messages.telegram_6.reply = { status: 'sent', final: false };
+  });
+  const result = await bridge.callTool('get_bridge_status', {});
+  assert.deepEqual(result.pending_messages.map(item => item.message_key), Array.from({ length: 7 }, (_, i) => `telegram_${i + 6}`));
+  assert.equal('text' in result.pending_messages[0], false);
+  for (let id = 13; id <= 20; id++) bridge.receive(update(id), config.telegramWebhookSecret);
+  assert.equal((await bridge.callTool('get_bridge_status', {})).pending_messages.length, 8);
 });
 
 test('signed callback verification, idempotent refresh and key rotation', async t => {
@@ -180,13 +225,33 @@ test('durable message and subscription state survives restart', async () => {
 });
 
 test('SSRF checks reject local, mapped, mixed and redirect destinations', async () => {
-  for (const address of ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', '::ffff:127.0.0.1', 'fc00::1', '192.0.2.1']) assert.equal(publicAddress(address), false, address);
+  for (const address of ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', '::ffff:127.0.0.1', 'fc00::1', '192.0.2.1', '198.18.9.172']) assert.equal(publicAddress(address), false, address);
   assert.equal(publicAddress('8.8.8.8'), true);
   const resolver = async () => [{ address: '8.8.8.8', family: 4 }, { address: '127.0.0.1', family: 4 }];
   await assert.rejects(callbackPost('https://example.test', '{}', {}, resolver), /Unsafe/);
   const credentialUrl = new URL('https://example.test');
   credentialUrl.username = 'synthetic-user';
   for (const url of ['http://example.test', credentialUrl.href, 'https://example.test:444', 'https://example.test/#fragment']) await assert.rejects(callbackPost(url, '{}', {}, resolver), /Unsafe/);
+});
+
+test('dedicated callback DNS preserves mixed-address rejection and global settings', async t => {
+  const before = getServers();
+  t.mock.method(Resolver.prototype, 'resolve4', async () => ['8.8.8.8']);
+  t.mock.method(Resolver.prototype, 'resolve6', async () => ['::1']);
+  const resolver = callbackResolver('1.1.1.1');
+  assert.deepEqual(getServers(), before);
+  await assert.rejects(callbackPost('https://callback.example.test', '{}', {}, resolver), /Unsafe callback address/);
+  assert.deepEqual(await resolver('127.0.0.1'), [{ address: '127.0.0.1', family: 4 }]);
+  assert.throws(() => callbackResolver('1.1.1.1,'), /Invalid callback DNS/);
+});
+
+test('dedicated callback DNS accepts absent IPv6 but fails closed on DNS errors', async t => {
+  t.mock.method(Resolver.prototype, 'resolve4', async () => ['8.8.8.8']);
+  const ipv6 = t.mock.method(Resolver.prototype, 'resolve6', async () => { throw Object.assign(new Error(), { code: 'ENODATA' }); });
+  const resolver = callbackResolver('1.1.1.1');
+  assert.deepEqual(await resolver('callback.example.test'), [{ address: '8.8.8.8', family: 4 }]);
+  ipv6.mock.mockImplementation(async () => { throw Object.assign(new Error(), { code: 'ETIMEOUT' }); });
+  await assert.rejects(resolver('callback.example.test'), /Callback DNS lookup failed/);
 });
 
 test('Telegram errors never expose URL tokens or raw response descriptions', async () => {
@@ -200,7 +265,7 @@ test('HTTP authentication rejects spoofed Sites identity headers', async t => {
   const { bridge } = fixture(t);
   const server = createBridgeServer(bridge);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => new Promise(resolve => server.close(resolve)));
+  t.after(() => closeBridgeServer(server));
   const url = `http://127.0.0.1:${server.address().port}/mcp`;
   const body = JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'server/discover' });
   const denied = await fetch(url, { method: 'POST', headers: { 'oai-authenticated-user-id': 'test-owner' }, body });
@@ -283,7 +348,7 @@ test('concurrent HTTP replies cannot create two Telegram messages', async t => {
   bridge.receive(update(), config.telegramWebhookSecret);
   const server = createBridgeServer(bridge);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => new Promise(resolve => server.close(resolve)));
+  t.after(() => closeBridgeServer(server));
   const url = `http://127.0.0.1:${server.address().port}/mcp`;
   const send = async (text, revision = 1, final = false) => {
     const result = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: revision === 1 ? 'reply_telegram_message' : 'update_telegram_message', arguments: { message_key: 'telegram_1', text, revision, final } } }) });
@@ -305,7 +370,7 @@ test('webhook storage failure returns 500 so Telegram can retry', async t => {
   const { bridge, store } = fixture(t);
   const server = createBridgeServer(bridge);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => new Promise(resolve => server.close(resolve)));
+  t.after(() => closeBridgeServer(server));
   t.mock.method(store, 'mutate', () => { throw new Error('Synthetic storage failure'); });
   const response = await fetch(`http://127.0.0.1:${server.address().port}/telegram/webhook`, {
     method: 'POST', headers: { 'X-Telegram-Bot-Api-Secret-Token': config.telegramWebhookSecret }, body: JSON.stringify(update()),
@@ -319,7 +384,7 @@ test('split UTF-8 request chunks preserve the exact Telegram text', async t => {
   const { bridge, store } = fixture(t);
   const server = createBridgeServer(bridge);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => new Promise(resolve => server.close(resolve)));
+  t.after(() => closeBridgeServer(server));
   const value = update();
   value.message.text = 'Synthetic emoji: \u{1F331}';
   const body = Buffer.from(JSON.stringify(value));
@@ -352,7 +417,7 @@ test('isolated HTTP workflow subscribes, receives, signs and edits one synthetic
   const { bridge, calls, posts } = fixture(t);
   const server = createBridgeServer(bridge);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => new Promise(resolve => server.close(resolve)));
+  t.after(() => closeBridgeServer(server));
   const origin = `http://127.0.0.1:${server.address().port}`;
   const rpc = async (method, params) => {
     const response = await fetch(`${origin}/mcp`, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
@@ -383,4 +448,92 @@ test('isolated HTTP workflow subscribes, receives, signs and edits one synthetic
   assert(calls.slice(1).every(call => call.params.message_id === 77));
   await rpc('events/unsubscribe', subscription());
   assert.equal((await bridge.callTool('get_bridge_status', {})).subscriptions, 0);
+});
+
+test('partial answers can be read and resumed by a new bridge instance', async t => {
+  const { bridge, store, calls } = fixture(t);
+  bridge.receive(update(), config.telegramWebhookSecret);
+  await bridge.callTool('reply_telegram_message', { message_key: 'telegram_1', revision: 1, text: 'First.', final: false });
+  const resumed = new Bridge({ store, config, telegram: bridge.telegram });
+  const message = await resumed.callTool('read_telegram_message', { message_key: 'telegram_1' });
+  assert.equal(message.reply.text, 'First.');
+  assert.equal(message.reply.messageId, 77);
+  await resumed.callTool('update_telegram_message', { message_key: 'telegram_1', revision: 2, text: message.reply.text + ' Second.', final: false });
+  await resumed.callTool('update_telegram_message', { message_key: 'telegram_1', revision: 3, text: message.reply.text + ' Second. Third.', final: true });
+  assert.equal(calls.filter(call => call.method === 'sendMessage').length, 1);
+  assert.ok(calls.slice(1).every(call => call.params.message_id === 77));
+});
+
+test('a late 410 cannot delete a refreshed Node subscription', async t => {
+  let now = Date.now();
+  const { bridge, rpc, store } = fixture(t, { now: () => now });
+  const sub = await rpc('events/subscribe', subscription());
+  bridge.receive(update(), config.telegramWebhookSecret);
+  let release;
+  bridge.post = async () => new Promise(resolve => { release = resolve; });
+  const delivery = bridge.deliver();
+  store.mutate(state => { state.subscriptions[sub.id].secret = replacementSecret; });
+  release({ status: 410 });
+  await delivery;
+  assert.equal(store.read().subscriptions[sub.id].secret, replacementSecret);
+  assert.equal(Object.values(store.read().deliveries)[0].done, false);
+  now += 3000;
+  bridge.post = async () => ({ status: 200 });
+  await bridge.deliver();
+  assert.equal(Object.values(store.read().deliveries)[0].acceptedAt > 0, true);
+});
+
+test('shutdown waits for a late queued RPC after its client disconnects', async t => {
+  const { bridge } = fixture(t);
+  let release;
+  let started;
+  const running = new Promise(resolve => { started = resolve; });
+  bridge.rpc = async () => { started(); await new Promise(resolve => { release = resolve; }); return {}; };
+  const server = createBridgeServer(bridge);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
+  const received = new Promise(resolve => server.once('request', resolve));
+  const request = http.request({ host: '127.0.0.1', port: server.address().port, path: '/mcp', method: 'POST',
+    headers: { 'Content-Length': Buffer.byteLength(body) } });
+  request.on('error', () => {});
+  request.write(body.slice(0, -1));
+  await received;
+  let closed = false;
+  const closing = closeBridgeServer(server).then(() => { closed = true; });
+  request.end(body.slice(-1));
+  await running;
+  request.destroy();
+  await new Promise(resolve => server.once('close', resolve));
+  await new Promise(resolve => setImmediate(resolve));
+  try { assert.equal(closed, false); }
+  finally { release(); await closing; }
+});
+
+test('slow callback delivery does not block MCP and shutdown drains the callback', async t => {
+  const { bridge, store, rpc } = fixture(t);
+  await rpc('events/subscribe', subscription());
+  let release;
+  let started;
+  const didStart = new Promise(resolve => { started = resolve; });
+  bridge.post = async () => { started(); return new Promise(resolve => { release = resolve; }); };
+  const server = createBridgeServer(bridge);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  bridge.receive(update(), config.telegramWebhookSecret);
+  await didStart;
+  try {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/mcp`, { method: 'POST', headers,
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_bridge_status', arguments: {} } }), signal: AbortSignal.timeout(1000) });
+    assert.equal(response.status, 200);
+    assert.equal(JSON.parse((await response.json()).result.content[0].text).messages, 1);
+    let closed = false;
+    const closing = closeBridgeServer(server).then(() => { closed = true; });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(closed, false);
+    release({ status: 200 });
+    await closing;
+    assert.equal(Object.values(store.read().deliveries)[0].done, true);
+  } finally {
+    release({ status: 200 });
+    if (server.listening) await closeBridgeServer(server);
+  }
 });

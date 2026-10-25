@@ -8,7 +8,7 @@ This is the alternative Node backend path approved for investigation and local t
 
 - `cloudflared` is installed. The inspected 2026.3.0 source supports accountless Quick Tunnels and the flags below.
 - The official Quick Tunnel API responds over HTTPS to a read-only request. This does not prove successful tunnel registration or edge connectivity.
-- `npm run verify:local` temporarily binds the actual bridge HTTP server to `127.0.0.1:8787` with synthetic values and disabled external transports. It verifies authentication and path boundaries, then closes the listener.
+- `npm run verify:local` temporarily binds the actual bridge HTTP server to an isolated ephemeral loopback port with synthetic values and disabled external transports. It verifies authentication and path boundaries, then closes the listener.
 - `npm run probe:local` starts a separate deny-all loopback probe with no database, credentials, proxying or external calls. It can be used for an explicitly approved public reachability check before entering any secrets. Stop it with Ctrl-C or SIGTERM.
 
 Do not tunnel the synthetic bridge used internally by `verify:local`. Public reachability testing uses only the deny-all probe until real configuration is separately approved.

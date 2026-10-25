@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
-import { lookup } from 'node:dns/promises';
+import { lookup, Resolver } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import https from 'node:https';
 import ipaddr from 'ipaddr.js';
 
@@ -17,7 +18,31 @@ export function publicAddress(address) {
   } catch { return false; }
 }
 
+// Only callback lookups use this optional resolver; never alter global DNS.
+export function callbackResolver(serverList) {
+  if (!serverList) return lookup;
+  const servers = serverList.split(',').map(value => value.trim());
+  if (!servers.length || servers.some(value => !isIP(value))) throw new Error('Invalid callback DNS servers');
+  const resolver = new Resolver({ timeout: 2000, tries: 1 });
+  resolver.setServers(servers);
+  return async host => {
+    const family = isIP(host);
+    if (family) return [{ address: host, family }];
+    const answers = await Promise.allSettled([resolver.resolve4(host), resolver.resolve6(host)]);
+    const addresses = [];
+    for (const [index, result] of answers.entries()) {
+      if (result.status === 'fulfilled') {
+        addresses.push(...result.value.map(address => ({ address, family: index === 0 ? 4 : 6 })));
+      } else if (!['ENODATA', 'ENOTFOUND'].includes(result.reason?.code)) {
+        throw new Error('Callback DNS lookup failed');
+      }
+    }
+    return addresses;
+  };
+}
+
 // Pin each request to a checked DNS answer, while keeping TLS hostname checks.
+/** @param {(host: string, options: import('node:dns').LookupAllOptions) => Promise<import('node:dns').LookupAddress[]>} [resolver] */
 export async function callbackPost(destination, body, headers, resolver = lookup) {
   const url = new URL(destination);
   if (url.protocol !== 'https:' || url.username || url.password || url.hash || (url.port && url.port !== '443')) {

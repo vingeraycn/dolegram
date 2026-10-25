@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, symlinkSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Bridge } from '../src/bridge.mjs';
 import { Store } from '../src/store.mjs';
 import { TelegramPoller, PollingStopped } from '../src/polling.mjs';
 import { TelegramFailure, telegramClient } from '../src/telegram.mjs';
-import { loadConfig, createBridgeServer } from '../src/server.mjs';
+import { loadConfig, createBridgeServer, closeBridgeServer } from '../src/server.mjs';
 import { EVENT_NAME } from '../src/contracts.mjs';
 import { Webhook } from 'standardwebhooks';
 
@@ -153,5 +153,25 @@ test('polling config needs identity but no webhook secret; webhook route disable
     const address = server.address();
     assert.equal((await fetch(`http://127.0.0.1:${address.port}/telegram/webhook`, { method: 'POST', body: '{}' })).status, 404);
     assert.throws(() => item.bridge.receive(update(10), undefined));
-  } finally { await new Promise(resolve => server.close(resolve)); item.store.close(); rmSync(dir, { recursive: true, force: true }); }
+  } finally { await closeBridgeServer(server); item.store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('private configuration rejects symlinks, broad permissions and header injection', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dotg-private-config-'));
+  try {
+    const file = join(dir, 'config.json');
+    const link = join(dir, 'config-link.json');
+    writeFileSync(file, JSON.stringify(config), { mode: 0o600 });
+    symlinkSync(file, link);
+    assert.throws(() => loadConfig(link));
+    chmodSync(file, 0o644);
+    assert.throws(() => loadConfig(file));
+    chmodSync(file, 0o600);
+    writeFileSync(file, JSON.stringify({ ...config, mcpBearerToken: 'x'.repeat(32) + '\r\n' }));
+    assert.throws(() => loadConfig(file));
+    writeFileSync(file, ' '.repeat(65537));
+    assert.throws(() => loadConfig(file));
+    writeFileSync(file, JSON.stringify(config));
+    assert.equal(loadConfig(file).ownerId, config.ownerId);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });

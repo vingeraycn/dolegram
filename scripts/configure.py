@@ -4,12 +4,13 @@ import getpass
 import json
 import os
 import re
+import secrets
 import sys
 
 
 def main():
     if not sys.stdin.isatty():
-        raise ValueError('Run this script yourself in an interactive local terminal.')
+        raise ValueError('Use an interactive local terminal for hidden secret input.')
     print('Use a separate dotg configuration. This script makes no network requests.')
     mode = input('Telegram intake [polling/webhook] (default polling): ').strip() or 'polling'
     if mode not in ('polling', 'webhook'):
@@ -20,12 +21,12 @@ def main():
         raise ValueError('Explicit expected Bot identity is required.')
     owner = input('Local owner identifier: ').strip()
     chats = [item.strip() for item in input('Allowed private chat IDs (comma-separated): ').split(',')]
-    bearer = getpass.getpass('MCP bearer secret (at least 32 characters): ')
+    bearer = getpass.getpass('MCP bearer secret (blank to generate securely): ') or secrets.token_urlsafe(32)
     token = getpass.getpass('Telegram Bot token: ')
     webhook = getpass.getpass('Telegram webhook secret (32-256 URL-safe characters): ') if mode == 'webhook' else None
     if not owner or not all(re.fullmatch(r'[1-9][0-9]*', item) for item in chats):
         raise ValueError('Owner and explicit private chat IDs are required.')
-    if len(bearer) < 32 or not token.strip() or (mode == 'webhook' and not re.fullmatch(r'[A-Za-z0-9_-]{32,256}', webhook)):
+    if not re.fullmatch(r'[!-~]{32,4096}', bearer) or not token.strip() or (mode == 'webhook' and not re.fullmatch(r'[A-Za-z0-9_-]{32,256}', webhook)):
         raise ValueError('Invalid secret format.')
     config = dict(ownerId=owner, allowedChatIds=chats, mcpBearerToken=bearer,
                   telegramBotToken=token, telegramMode=mode)

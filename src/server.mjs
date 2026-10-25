@@ -1,23 +1,43 @@
 import { createServer } from 'node:http';
-import { readFileSync, statSync, openSync, closeSync, unlinkSync, mkdirSync } from 'node:fs';
+import { readFileSync, fstatSync, constants, openSync, closeSync, unlinkSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { Bridge, RpcFailure } from './bridge.mjs';
 import { TelegramPoller } from './polling.mjs';
 import { Store } from './store.mjs';
 import { telegramClient } from './telegram.mjs';
+import { TelegramActivity } from './activity.mjs';
+import { DeliveryWorker } from './delivery.mjs';
+import { callbackPost, callbackResolver } from './security.mjs';
 
 export function loadConfig(path) {
-  if ((statSync(path).mode & 0o077) !== 0) throw new Error('Configuration must have mode 0600');
-  const config = JSON.parse(readFileSync(path, 'utf8'));
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  let config;
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || (stat.mode & 0o777) !== 0o600 || stat.uid !== process.getuid() || stat.size > 65536) throw new Error('Configuration must be a private regular file owned by this user');
+    config = JSON.parse(readFileSync(fd, 'utf8'));
+  } finally { closeSync(fd); }
   for (const field of ['ownerId', 'mcpBearerToken', 'telegramBotToken']) {
     if (typeof config[field] !== 'string' || !config[field].trim()) throw new Error(`Missing configuration field: ${field}`);
   }
   config.telegramMode ??= 'webhook';
   if (!['webhook', 'polling'].includes(config.telegramMode)) throw new Error('Invalid Telegram mode');
   if (config.telegramMode === 'polling' && (typeof config.expectedBotId !== 'string' || !/^[1-9][0-9]*$/.test(config.expectedBotId) || typeof config.expectedBotUsername !== 'string' || !/^[A-Za-z0-9_]{5,32}$/.test(config.expectedBotUsername))) throw new Error('Polling requires expected Bot identity');
-  if (config.mcpBearerToken.length < 32 || (config.telegramMode === 'webhook' && (typeof config.telegramWebhookSecret !== 'string' || !/^[A-Za-z0-9_-]{32,256}$/.test(config.telegramWebhookSecret)))) throw new Error('Invalid authentication configuration');
+  if (!/^[!-~]{32,4096}$/.test(config.mcpBearerToken) || (config.telegramMode === 'webhook' && (typeof config.telegramWebhookSecret !== 'string' || !/^[A-Za-z0-9_-]{32,256}$/.test(config.telegramWebhookSecret)))) throw new Error('Invalid authentication configuration');
   if (!Array.isArray(config.allowedChatIds) || !config.allowedChatIds.length || !config.allowedChatIds.every(id => typeof id === 'string' && /^[1-9][0-9]*$/.test(id))) throw new Error('Explicit private chat allowlist required');
   return config;
+}
+
+const lifecycles = new WeakMap();
+
+export async function closeBridgeServer(server) {
+  const lifecycle = lifecycles.get(server);
+  await Promise.all([lifecycle?.stop(), new Promise((resolve, reject) => {
+    server.close(error => error ? reject(error) : resolve(undefined));
+  })]);
+  // A request can finish reading its body after shutdown starts. Even if its
+  // client disconnects, wait for the latest queued operation before closing DB.
+  await lifecycle?.idle();
 }
 
 export function createBridgeServer(bridge) {
@@ -61,15 +81,24 @@ export function createBridgeServer(bridge) {
   });
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
-  const timer = setInterval(() => { serialize(() => bridge.deliver()).catch(() => {}); }, 1000);
-  timer.unref();
-  server.on('close', () => clearInterval(timer));
+  const delivery = new DeliveryWorker(bridge);
+  bridge.onAccepted = () => { void delivery.kick(); };
+  const activityTimer = setInterval(() => bridge.activity?.poke(), 1000);
+  activityTimer.unref();
+  const drain = async () => {
+    clearInterval(activityTimer);
+    bridge.onAccepted = () => {};
+    await Promise.all([delivery.close(), bridge.activity?.close()]);
+  };
+  lifecycles.set(server, { stop: drain, idle: () => tail });
+  server.on('close', () => { void drain(); });
   return server;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
   try {
     const config = loadConfig(process.env.DOTG_CONFIG ?? 'config.local.json');
+    const resolveCallback = callbackResolver(process.env.DOTG_CALLBACK_DNS_SERVERS);
     if (process.env.DOTG_ENABLE_POLLING === '1' && config.telegramMode !== 'polling') throw new Error('Polling mode required');
     const database = resolve(process.env.DOTG_DATABASE ?? 'runtime/dotg.sqlite');
     mkdirSync(dirname(database), { recursive: true, mode: 0o700 });
@@ -77,7 +106,10 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.
     const lock = `${database}.lock`;
     const fd = openSync(lock, 'wx', 0o600);
     const store = new Store(database);
-    const bridge = new Bridge({ store, config, telegram: telegramClient(config.telegramBotToken) });
+    const telegram = telegramClient(config.telegramBotToken);
+    const activity = new TelegramActivity({ store, config, telegram });
+    const bridge = new Bridge({ store, config, telegram, activity,
+      post: (url, body, headers) => callbackPost(url, body, headers, resolveCallback) });
     const server = createBridgeServer(bridge);
     const controller = new AbortController();
     let polling = Promise.resolve();
@@ -93,7 +125,9 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.
       if (stopping) return;
       stopping = true;
       controller.abort();
-      server.close(() => { polling.finally(() => { store.close(); closeSync(fd); unlinkSync(lock); }); });
+      Promise.all([polling, closeBridgeServer(server)]).then(() => {
+        store.close(); closeSync(fd); unlinkSync(lock);
+      }).catch(() => { console.error('dotg shutdown incomplete; runtime lock retained'); process.exitCode = 1; });
     };
     process.on('SIGTERM', stop);
     process.on('SIGINT', stop);

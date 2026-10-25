@@ -21,3 +21,5 @@ __pycache__/
 coverage/
 plugin-build/
 dist/
+launcher.local.json
+installation.local.*

@@ -1,35 +1,58 @@
 # dotg
 
-A new implementation of a private Telegram Bot to Dot bridge using official MCP Events. This is **not recovered original plugin source**.
+Connect your private Telegram Bot to your existing ChatGPT Dot. Messages arrive on your Mac, trigger MCP Events, and receive replies through the Bot—including cumulative edits to the same message.
 
-The preferred private route uses a local Node backend, Telegram long polling and OpenAI Secure MCP Tunnel; it needs no public Telegram webhook. A source-only Sites/D1 alternative is also included. The Sites production entry intentionally refuses unverified callback delivery. Local mock tests and static checks are available. **No deployment, real Bot connection, or end-to-end Dot subscription has been validated.** Existing services remain separate and unchanged.
+```text
+Telegram → local dotg → signed MCP Events → Dot
+Telegram ← Bot API   ← local dotg        ← private MCP Tunnel
+```
 
-## Give this sentence to your Agent
+No public Telegram webhook, domain, or inbound port is needed for the preferred Mac installation. You need a Telegram Bot, a Mac running Node.js, and a ChatGPT workspace that supports private Tunnel connections and MCP Events.
 
-> Read https://github.com/vingeraycn/dotg/blob/main/INSTALL.md, install and verify dotg locally, then guide me through secure configuration; ask for explicit approval before deployment, Bot/webhook changes or host authorization, never request secrets in chat, and report any unverified integration instead of claiming success.
+## Install with your Agent
 
-This repository is private. Other users and their Agents need owner-granted read access. Do not publish the repository to enable installation.
+Give this sentence to an Agent that can work on your Mac:
+
+> Read https://github.com/vingeraycn/dotg/blob/main/INSTALL.md and install and configure dotg on my Mac to connect my Telegram Bot to my existing Dot; reuse authorized local resources, protect credentials, complete a safe consumer handover and real reply/edit verification, and ask me only for missing choices or actions that genuinely require me.
+
+The Agent follows a resumable guide: inspect → configure → connect → verify → hand over. This is an installation prompt, not a shell command or a promise to bypass account permissions or macOS security prompts. The repository is currently private; read access is required. Publication and an open-source license are still pending.
+
+## What you get
+
+- Explicit private-chat allowlists and expected Bot identity checks.
+- A temporary queued draft, then Telegram Thinking/typing once Dot actually reads the message. No permanent receipt clutter. Current status copy is Chinese.
+- One formal reply for short answers. Longer answers use a useful first chunk followed by two or three cumulative edits to the same message, up to 4096 UTF-16 code units. This is chunked output; dotg cannot access Dot's internal token stream.
+- Durable incoming-message deduplication, bounded signed-event retries, consecutive reply revisions, and idempotent successful write retries.
+- Separate receipt, callback, read, and reply timestamps. Callback acceptance does not imply that Dot has started; host scheduling can add substantial variable delay.
+- Fail-closed handling of ambiguous Telegram writes. An operator reconciles uncertain results instead of risking duplicate replies.
+
+The private Mac route has passed live discovery, Events subscription, short reply, cumulative edit, successful retry, and backend restart checks. This is a low-volume, single-owner service. Unattended boot/login recovery, every account configuration, and predictable response latency are not established.
+
+## Guides
+
+| Goal | Guide |
+| --- | --- |
+| Install or resume with an Agent | [INSTALL.md](INSTALL.md) |
+| Connect the private Tunnel | [TUNNEL.md](TUNNEL.md) |
+| Configure the Dot event handler | [Dot task instructions](docs/dot-task.md) |
+| Inspect, restart, recover, or roll back | [OPERATIONS.md](OPERATIONS.md) |
+| Understand security and reporting | [SECURITY.md](SECURITY.md) |
+| Contribute and run checks | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Prepare the public release | [Release readiness](docs/release-readiness.md) |
+| Understand design and provenance | [ARCHITECTURE.md](ARCHITECTURE.md), [SOURCE_STATUS.md](SOURCE_STATUS.md) |
+
+The [portable plugin template](PLUGIN.md) is for a separately hosted HTTPS backend. Its placeholder is deliberately not installable and is not a Tunnel package. The [Sites adapter](sites/README.md) is source-only with production callback delivery disabled; it is not the supported onboarding route.
 
 ## Local development
 
-Use Node.js 22.x (22.13+) or Node.js 24+ (a maintained LTS version is recommended), npm, and Python 3 for the optional interactive configuration helper.
+Use Node.js 22.13+ within 22.x, or 24+, npm, and Python 3 for the optional configuration helper. Prefer a maintained Node LTS.
 
 ```sh
 npm ci --ignore-scripts
 npm run check
 npm test
+npm run verify:local
+npm run build:sites
 ```
 
-The tests use synthetic fixtures and mocked Telegram/callback transports. One HTTP test binds only to loopback. They do not use Bot tokens or send external messages.
-
-## Behavior
-
-- Accept allowlisted private text messages through opt-in outbound long polling or an authenticated Telegram webhook. Polling is disabled by default and verifies the expected Bot identity; it never changes webhooks.
-- Persist incoming update IDs, subscriptions, delivery retries, and reply state in a private SQLite database.
-- Advertise `telegram.message.received` and the four tools `get_bridge_status`, `read_telegram_message`, `reply_telegram_message`, and `update_telegram_message`.
-- Use the actual MCP Events subscription lifecycle, callback verification and Standard Webhooks signatures. Ordinary MCP notifications are not event delivery.
-- Short answers use one formal reply. Long answers begin with useful formal content and then append cumulative content with two or three edits to that same Telegram message. Revisions increase from 1 to at most 4; the last edit is final. No draft API or progress placeholder is used. The Agent must decide what constitutes useful content.
-- Maximum reply size is 4096 UTF-16 code units; longer text is rejected rather than silently truncated or split into extra messages.
-- A timed-out or interrupted Telegram write is blocked as uncertain, preventing automatic duplicate sends. Operator reconciliation is required.
-
-See [INSTALL.md](INSTALL.md), [private Tunnel setup and live handshake](TUNNEL.md), [Sites adapter and native retry workflow](sites/README.md), [Sites feasibility](SITES_FEASIBILITY.md), [plugin packaging](PLUGIN.md), [implementation decisions](ARCHITECTURE.md), and [provenance](SOURCE_STATUS.md).
+Automated tests use synthetic data and mocked external transports. The loopback probe uses a temporary port and does not interfere with a running installation. These checks do not send real Telegram messages or prove a live Dot connection.

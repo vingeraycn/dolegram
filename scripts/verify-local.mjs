@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { Bridge } from '../src/bridge.mjs';
 import { Store } from '../src/store.mjs';
-import { createBridgeServer } from '../src/server.mjs';
+import { createBridgeServer, closeBridgeServer } from '../src/server.mjs';
 
 // Synthetic values only. This temporary service must never be tunneled publicly.
 const config = {
@@ -18,12 +18,12 @@ const server = createBridgeServer(bridge);
 try {
   await new Promise((resolve, reject) => {
     server.once('error', reject);
-    server.listen(8787, '127.0.0.1', resolve);
+    server.listen(0, '127.0.0.1', resolve);
   });
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Unexpected loopback listener address');
   assert.equal(address.address, '127.0.0.1');
-  const origin = 'http://127.0.0.1:8787';
+  const origin = `http://127.0.0.1:${address.port}`;
   for (const path of ['/', '/files', '/api', '/mcp/extra', '/telegram/webhook/extra']) {
     assert.equal((await fetch(origin + path, { method: 'POST', body: '{}' })).status, 404);
   }
@@ -35,9 +35,9 @@ try {
   const result = await response.json();
   assert.equal(response.status, 200);
   assert.equal(JSON.parse(result.result.content[0].text).messages, 0);
-  console.log('PASS: loopback-only port 8787; two POST routes authenticated; unrelated paths rejected; no external transports or credentials used.');
+  console.log('PASS: isolated loopback port; two POST routes authenticated; unrelated paths rejected; no external transports or credentials used.');
 } finally {
-  if (server.listening) await new Promise(resolve => server.close(resolve));
+  if (server.listening) await closeBridgeServer(server);
   else server.emit('close');
   store.close();
 }
