@@ -44,7 +44,7 @@ Restoring an old database is a separate operation from rolling back code. Use [s
 
 ## Uncertain writes and partial answers
 
-A Telegram timeout may mean the message was sent even though the response was lost. dotg records uncertain state and blocks new writes to prevent duplicates. Inspect the actual authorized Telegram conversation and reconcile the result with the stored intent. There is no automatic reconciliation command. Do not clear state or invent a message ID.
+A Telegram timeout may mean the message was sent even though the response was lost. dotg records uncertain state and blocks new writes to prevent duplicates. The [offline reconciliation tool](docs/reconciliation.md) can record an independently observed successful reply, after exact evidence matching and a verified pre-change snapshot. It refuses a running backend and never resends or infers non-delivery. Do not clear state or invent a message ID.
 
 A confirmed sent nonfinal answer can resume from `read_telegram_message`'s exact `reply.text`, `reply.messageId` and revision. Follow [the handler contract](docs/dot-task.md). A rate-limited rejected write may retry after its deadline; an uncertain write may not.
 
@@ -52,7 +52,7 @@ A confirmed sent nonfinal answer can resume from `read_telegram_message`'s exact
 
 MCP Events subscriptions expire within 24 hours and depend on host renewal, regardless of Tunnel key lifetime. Queued events survive backend restart and retry at most six times with backoff. Expired subscriptions and terminal callback responses stop delivery. Callback 2xx means accepted, not answered. Non-null replay cursors are unsupported.
 
-All accepted messages and reply/deduplication state remain in the database. Storage uses a single serialized state row and is intended for low-volume personal use. Retention compaction and a durable operator reconciliation UI are future work; deleting old records without a design can break replay protection and reply recovery. Protect backups and schedule owner-approved maintenance rather than silently deleting history.
+All accepted messages and reply/deduplication state remain in the database. Storage uses a single serialized state row and is intended for low-volume personal use. Retention compaction and a graphical reconciliation interface are future work; deleting old records without a design can break replay protection and reply recovery. Protect backups and schedule owner-approved maintenance rather than silently deleting history.
 
 ## Rollback to the previous consumer
 
