@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Webhook } from 'standardwebhooks';
 import { callbackPost, equalSecret } from './security.mjs';
 import { EVENT_NAME, event, tools, validate } from './contracts.mjs';
+import { summarizeDiagnostics } from './diagnostics.mjs';
 import { TelegramFailure } from './telegram.mjs';
 
 export class RpcFailure extends Error {
@@ -18,6 +19,7 @@ export class Bridge {
     this.now = now;
     this.activity = activity;
     this.onAccepted = () => {};
+    this.intakeStatus = () => ({ state: 'unknown' });
   }
   allowed(chat) { return this.config.allowedChatIds.includes(chat); }
   principal(headers) {
@@ -158,7 +160,7 @@ export class Bridge {
   }
   async callTool(name, args) {
     const state = this.store.read();
-    if (name === 'get_bridge_status') return { source: 'reimplementation', activity: this.activity?.status(), messages: Object.values(state.messages).filter(message => message.owner === this.config.ownerId).length,
+    if (name === 'get_bridge_status') return { source: 'reimplementation', diagnostics: summarizeDiagnostics(state, this.config, this.now(), this.intakeStatus()), activity: this.activity?.status(), messages: Object.values(state.messages).filter(message => message.owner === this.config.ownerId).length,
       awaitingReplies: Object.values(state.messages).filter(message => message.owner === this.config.ownerId && !(message.reply?.final && message.reply.status === 'sent')).length,
       pending_messages: Object.values(state.messages)
         .filter(message => message.owner === this.config.ownerId && this.allowed(message.chatId) &&

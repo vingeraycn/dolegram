@@ -4,6 +4,16 @@ Keep an ignored local record of checkout, Node/client versions, runtime director
 
 ## Inspect before changing anything
 
+Run the read-only diagnostic command from the checkout using its supported Node LTS:
+
+```sh
+npm run doctor -- --tunnel-health-file /absolute/path/to/runtime/health.url
+```
+
+Use `--config PATH` (or `DOTG_CONFIG`) for an existing private configuration and `npm run --silent doctor -- --json` for a structured report without npm banners. Exit codes are 0 for passed local checks, 1 for warnings/incomplete evidence, and 2 for failed checks. Reports contain fixed guidance and aggregate counts, not message bodies, chat IDs, credential values or callback addresses. The command does not open the database, read Keychain, poll Telegram, send messages or repair anything.
+
+Doctor distinguishes intake disabled/stopped/retrying, incomplete subscription coverage, callback failures, accepted events awaiting Dot, processing, partial answers and uncertain writes. It performs local authenticated discovery; Tunnel readiness and historical reply records remain separate from real host and fresh end-to-end acceptance. An older running backend is reported as lacking detailed diagnostics until a controlled restart loads the new source. A warning about a pending reply can be normal while Dot is working.
+
 Use the real host's `get_bridge_status` to check subscription status, received messages, reply state, pending keys, and activity counters. Separate message receipt, callback acceptance, first tool read, and first answer. A long interval after callback acceptance but before first read is a host scheduling/dispatch observation, not proof of a particular internal cause.
 
 | Symptom | Next check |

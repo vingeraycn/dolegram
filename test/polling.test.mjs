@@ -123,20 +123,38 @@ test('Telegram conflict stops polling without retry or raw error disclosure', as
   try {
     item.poller.telegram = async () => { throw new TelegramFailure('conflict'); };
     await assert.rejects(item.poller.run(new AbortController().signal), PollingStopped);
+    assert.equal(item.poller.status().state, 'stopped');
+    assert.equal(item.poller.status().reason, 'conflict');
   } finally { item.store.close(); }
 });
 
 test('shutdown aborts retry backoff without another request', async () => {
   const item = setup(); const controller = new AbortController(); let calls = 0;
+  let retryStatus;
   item.poller.telegram = async () => {
     calls += 1;
-    setTimeout(() => controller.abort(), 0);
+    setTimeout(() => { retryStatus = item.poller.status(); controller.abort(); }, 0);
     throw new TelegramFailure('rate_limit', 60);
   };
   try {
     await item.poller.run(controller.signal);
     await item.poller.once(controller.signal);
     assert.equal(calls, 1);
+    assert.equal(retryStatus.state, 'retrying');
+    assert.equal(retryStatus.reason, 'rate_limit');
+    assert.ok(retryStatus.retryAt > Date.now());
+    assert.equal(item.poller.status().reason, 'shutdown');
+  } finally { item.store.close(); }
+});
+
+test('a completed polling cycle records success without claiming a reply', async () => {
+  const item = setup(); const controller = new AbortController(); let cycles = 0;
+  item.poller.once = async () => { if (++cycles === 2) controller.abort(); };
+  try {
+    await item.poller.run(controller.signal);
+    assert.equal(cycles, 2);
+    assert.ok(Number.isSafeInteger(item.poller.status().lastSuccessAt));
+    assert.equal((await item.bridge.callTool('get_bridge_status', {})).messages, 0);
   } finally { item.store.close(); }
 });
 

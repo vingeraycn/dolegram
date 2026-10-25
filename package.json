@@ -4,16 +4,17 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "^22.13.0 || >=24.0.0"
+    "node": "^22.16.0 || ^24.0.0"
   },
   "scripts": {
-    "start": "node src/server.mjs",
-    "test": "node --test",
-    "check": "tsc --noEmit && eslint .",
+    "start": "node scripts/check-runtime.mjs && node src/server.mjs",
+    "test": "node scripts/check-runtime.mjs && node --test",
+    "check": "node scripts/check-runtime.mjs && tsc --noEmit && eslint .",
     "configure": "python3 scripts/configure.py",
-    "build:sites": "node scripts/build-sites.mjs",
-    "verify:local": "node scripts/verify-local.mjs",
-    "probe:local": "node scripts/probe-server.mjs"
+    "build:sites": "node scripts/check-runtime.mjs && node scripts/build-sites.mjs",
+    "verify:local": "node scripts/check-runtime.mjs && node scripts/verify-local.mjs",
+    "probe:local": "node scripts/probe-server.mjs",
+    "doctor": "node scripts/check-runtime.mjs && node scripts/doctor.mjs"
   },
   "dependencies": {
     "ipaddr.js": "2.2.0",
@@ -24,5 +25,6 @@
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "typescript": "7.0.2"
-  }
+  },
+  "license": "MIT"
 }

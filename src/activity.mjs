@@ -68,7 +68,7 @@ export class TelegramActivity {
     if (!hasReply && (state.draftMessageId !== message.messageId || state.phase !== phase || state.draftAt <= this.now())) {
       const text = uncertain ? 'Reply delivery is unconfirmed. Awaiting review.'
         : slow ? 'This is taking longer than expected. Still waiting for a complete reply.'
-        : waiting ? '⏳ Message delivered. Waiting for the system to forward it to Dot.' : '';
+        : waiting ? '⏳ Message delivered. Waiting for the ChatGPT scheduler to forward it to Dot.' : '';
       jobs.push(this.send('sendMessageDraft', { chat_id: message.chatId, draft_id: message.messageId, text }, state).then(sent => {
         if (sent) {
           state.phase = phase;

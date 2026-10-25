@@ -17,7 +17,7 @@ test('one draft changes from queued to native Thinking; typing only covers proce
   await activity.tick();
   assert.equal(calls.length, 1);
   assert.equal(calls[0].method, 'sendMessageDraft');
-  assert.equal(calls[0].params.text, '⏳ Message delivered. Waiting for the system to forward it to Dot.');
+  assert.equal(calls[0].params.text, '⏳ Message delivered. Waiting for the ChatGPT scheduler to forward it to Dot.');
   const draftId = calls[0].params.draft_id;
   advance(3000);
   await activity.tick();

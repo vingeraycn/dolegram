@@ -14,7 +14,7 @@ The configuration helper generates an independent bearer when omitted. The macOS
 
 ## Required before changing visibility
 
-- Choose and add the owner's intended open-source license. No license is implied by this preparation.
+- The owner selected MIT and the [license](../LICENSE) is present. Verify third-party license notices and branding provenance before release; the project license does not grant third-party trademark rights.
 - Repeat the privacy audit of history, releases, attachments, issues and CI logs before publication. An owner-authorized rewrite removed identified private development references and personal email addresses from reachable history. Old commits remained accessible to the authenticated owner through GitHub by SHA after the rewrite; service-side cache/object removal remains separate. Verify that boundary before changing visibility, and do not merge or push pre-cleanup clones back into the repository.
 - Perform a clean-room installation using a different approved account/Bot and only the published guide. Record which steps required the owner and resolve unclear steps. Current-owner acceptance does not prove universal installability.
 - Verify current official Tunnel client versions/checksums and host feature availability. Keep the placeholder package noninstallable. Do not invent public distribution support for private Tunnel connections.
@@ -23,7 +23,7 @@ The configuration helper generates an independent bearer when omitted. The macOS
 
 ## Follow-up implementation priorities
 
-First, turn redacted checkpoints into a versioned local installation record and provide a read-only doctor command. It should distinguish backend, Tunnel, host tools, subscription, consumer and actual reply stages without reading unrelated credentials or fabricating success.
+The read-only `npm run doctor` command now distinguishes local backend discovery, configured Tunnel health, consumer health, subscription coverage and delivery/reply stages. It does not claim real host discovery or fresh end-to-end acceptance. Next, turn redacted checkpoints into a versioned local installation record and use it to resume setup and maintenance consistently.
 
 Next, add an opt-in macOS service installer only after specifying locked-Keychain behavior, login/reboot tests, upgrades and rollback. Avoid bundling a secret into a launchd plist or silently approving Keychain access.
 

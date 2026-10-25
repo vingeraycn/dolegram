@@ -14,7 +14,9 @@ export class TelegramPoller {
     this.username = username;
     this.key = `${bridge.config.ownerId}:${botId}`;
     this.busy = false;
+    this.health = { state: 'starting', lastSuccessAt: null, retryAt: null, reason: null };
   }
+  status() { return { ...this.health }; }
   async verify(signal) {
     const me = await this.telegram('getMe', {}, signal);
     if (String(me?.id) !== this.botId || me?.username !== this.username || me?.is_bot !== true) throw new PollingStopped('Bot identity mismatch');
@@ -44,20 +46,33 @@ export class TelegramPoller {
     } finally { this.busy = false; }
   }
   async run(signal) {
-    while (!signal.aborted) {
-      try { await this.once(signal); }
-      catch (error) {
-        if (signal.aborted) return;
-        if (error instanceof PollingStopped || !(error instanceof TelegramFailure) || ['conflict', 'rejected'].includes(error.code)) throw new PollingStopped('Polling stopped; inspect identity, webhook, credentials or competing consumer');
-        // Back off without logging raw transport errors, credentials or messages.
-        const delay = Math.max(1000, Math.min(2147483647, Number.isFinite(error.retryAfter) ? error.retryAfter * 1000 : 1000));
-        await new Promise(resolve => {
-          const done = () => { clearTimeout(timer); signal.removeEventListener('abort', done); resolve(undefined); };
-          const timer = setTimeout(done, delay);
-          signal.addEventListener('abort', done, { once: true });
-          if (signal.aborted) done();
-        });
+    try {
+      while (!signal.aborted) {
+        try {
+          this.health.state = 'polling';
+          await this.once(signal);
+          if (!signal.aborted) Object.assign(this.health, { lastSuccessAt: Date.now(), retryAt: null, reason: null });
+        } catch (error) {
+          if (signal.aborted) return;
+          if (error instanceof PollingStopped || !(error instanceof TelegramFailure) || ['conflict', 'rejected'].includes(error.code)) {
+            Object.assign(this.health, { state: 'stopped', retryAt: null,
+              reason: error instanceof TelegramFailure && error.code === 'conflict' ? 'conflict' : 'verification_or_storage' });
+            throw new PollingStopped('Polling stopped; inspect identity, webhook, credentials or competing consumer');
+          }
+          // Back off without retaining raw transport errors, credentials or messages.
+          const delay = Math.max(1000, Math.min(2147483647, Number.isFinite(error.retryAfter) ? error.retryAfter * 1000 : 1000));
+          Object.assign(this.health, { state: 'retrying', retryAt: Date.now() + delay,
+            reason: error.code === 'rate_limit' ? 'rate_limit' : 'network' });
+          await new Promise(resolve => {
+            const done = () => { clearTimeout(timer); signal.removeEventListener('abort', done); resolve(undefined); };
+            const timer = setTimeout(done, delay);
+            signal.addEventListener('abort', done, { once: true });
+            if (signal.aborted) done();
+          });
+        }
       }
+    } finally {
+      if (signal.aborted) Object.assign(this.health, { state: 'stopped', retryAt: null, reason: 'shutdown' });
     }
   }
 }

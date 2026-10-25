@@ -1,6 +1,6 @@
 # Contributing
 
-The repository is preparing for a public release and currently has no open-source license. Keep code, comments, commit messages and documentation in English. Do not alter repository visibility or rewrite history as routine cleanup.
+The repository is preparing for a public release under the [MIT License](LICENSE). Contributions are made under the same license. Keep code, comments, commit messages and documentation in English. Do not alter repository visibility or rewrite history as routine cleanup.
 
 ## Development checks
 

@@ -18,6 +18,9 @@ The signing secret is validated as a `whsec_` value with 24-64 decoded bytes. Re
 - `activity.mjs`: bounded ephemeral queued/processing feedback, independent of durable replies; failures and rate limits do not block formal answers.
 - `delivery.mjs`: coalesced single-flight callback delivery, independent of the HTTP operation queue and drained on shutdown.
 - `server.mjs`: loopback HTTP server, bearer authentication, bounded input, serialized RPC operations and a single-process runtime lock. Arbitrary Sites identity headers are not trusted by this standalone server.
+- `config.mjs`: shared private configuration validation for the server and local operator tools.
+- `diagnostics.mjs`: owner/allowlist-scoped aggregate delivery stages and bounded recent latency samples; it does not change state or expose message content.
+- `doctor.mjs`: read-only loopback discovery and readiness checks with fixed, actionable output. Polling health is reported by the actual poller, independently of HTTP availability. No diagnostic command creates subscriptions, reads Keychain or attempts a repair.
 
 The standalone design avoids assuming that Sites Workers support the required inbound Telegram webhook and DNS pinning APIs. The separate source-only Sites adapter uses D1 atomic batches, owner-bound identity, exact-origin callback validation and an explicit retry tool for the documented native Sites task workflow. It refuses production subscription delivery until a verified callback transport is provided; fixed-origin policy alone is not claimed as a protocol exemption. No hosting manifest is included because no Site has been created for this reimplementation.
 

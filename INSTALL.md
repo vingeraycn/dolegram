@@ -27,7 +27,7 @@ npm test
 npm run verify:local
 ```
 
-Do not overwrite an existing checkout or discard changes. Use Node.js 22.13+ within 22.x, or 24+, npm, and Python 3. The built-in SQLite API may emit an experimental warning. These checks need no credentials.
+Do not overwrite an existing checkout or discard changes. Use Node.js 22.16+ within 22.x, or 24.x, npm, and Python 3. The built-in SQLite API may emit an experimental warning. These checks need no credentials.
 
 ## 2. Configure through a protected local destination
 
