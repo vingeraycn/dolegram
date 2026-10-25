@@ -1,6 +1,6 @@
 # Visual assets
 
-- `dotg-icon.png`: the Dot ring combined with a Telegram paper plane; transparent exterior and center.
+- `dotg-icon.png`: the Dot ring with a small matching lavender-gray Telegram paper plane centered inside its opening; transparent exterior and space around the plane.
 - `dotg-logo.png`: horizontal icon and wordmark for the README.
 - `how-it-works.png`: the Telegram → Mac → Dot round trip, with a separate return path.
 
