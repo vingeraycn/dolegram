@@ -16,40 +16,6 @@
   background: var(--bg);
   color: var(--text);
 }
-.analytics-consent {
-  position: fixed;
-  z-index: 20;
-  right: 20px;
-  bottom: 20px;
-  width: min(440px, calc(100% - 40px));
-  padding: 20px;
-  background: #111923;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  box-shadow: 0 12px 50px #0008;
-}
-.analytics-consent p {
-  margin: 0 0 16px;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.analytics-consent a {
-  color: var(--accent);
-  text-decoration: underline;
-}
-.analytics-consent div {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.analytics-consent button {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--accent);
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-}
 #analytics-settings {
   color: inherit;
   background: none;

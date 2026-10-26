@@ -1,7 +1,5 @@
 "use strict";
 
-import { track } from "./analytics.js";
-
 const root = document.documentElement;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const motionButton = document.querySelector("#motion");
@@ -55,7 +53,6 @@ replayButton.addEventListener("click", () => {
   finishDemo();
   if (reducedMotion.matches || manuallyPaused) return;
   replayButton.disabled = true;
-  track("demo_replay");
   answer.textContent = "Waiting for Dot…";
   demoTimers = [
     setTimeout(() => {
@@ -73,11 +70,9 @@ copyButton.addEventListener("click", async () => {
     if (!navigator.clipboard?.writeText)
       throw new Error("Clipboard unavailable");
     await navigator.clipboard.writeText(prompt.value);
-    track("install_prompt_copy");
     copyStatus.textContent = "Copied. Paste it into your Agent.";
     copyButton.querySelector("span").textContent = "Copied!";
   } catch {
-    track("install_prompt_copy_fallback");
     copyButton.querySelector("span").textContent = "Copy install prompt";
     prompt.focus();
     prompt.select();

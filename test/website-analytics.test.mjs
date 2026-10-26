@@ -3,86 +3,85 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync(new URL('../docs/web/analytics.js', import.meta.url), 'utf8').replace('export function track', 'function track');
-function setup({ saved = null, blockedStorage = false, hostname = 'vingeraycn.github.io' } = {}) {
-  const nodes = new Map();
-  const scripts = [];
-  const writes = [];
-  let preference = saved;
-  const node = (selector) => {
-    if (!nodes.has(selector)) nodes.set(selector, { hidden: true, handlers: {}, addEventListener(name, fn) { this.handlers[name] = fn; }, focus() {} });
-    return nodes.get(selector);
-  };
-  const document = {
-    querySelector: node,
-    createElement: () => ({}),
-    head: { append: (script) => scripts.push(script) },
-    referrer: 'https://example.com/private/path?email=private@example.com',
-    addEventListener() {},
-    get cookie() { return 'dolegram_ga=one; dolegram_ga_YPHXN0WKW5=two; other=keep'; },
-    set cookie(value) { writes.push(value); },
-  };
-  const window = {};
-  const context = vm.createContext({
-    window, document, URL, location: { hostname, pathname: '/dolegram/' },
+const source = readFileSync(new URL('../docs/web/analytics.js', import.meta.url), 'utf8');
+function setup({ saved, legacy, blockedStorage = false, hostname = 'vingeraycn.github.io', pathname = '/dolegram/', privacy = {} } = {}) {
+  const preferences = new Map();
+  if (saved !== undefined) preferences.set('dolegram.analytics-disabled.v1', saved);
+  if (legacy !== undefined) preferences.set('dolegram.analytics-consent.v1', legacy);
+  const scripts = [], cookies = [];
+  let reloads = 0;
+  const settings = { hidden: true, handlers: {}, addEventListener(name, fn) { this.handlers[name] = fn; } };
+  vm.runInNewContext(source, {
+    navigator: privacy,
+    location: { hostname, pathname, reload() { reloads++; } },
     localStorage: {
-      getItem() { if (blockedStorage) throw Error('Denied'); return preference; },
-      setItem(_key, value) { if (blockedStorage) throw Error('Denied'); preference = value; },
+      getItem(key) { if (blockedStorage) throw Error('Denied'); return preferences.get(key) ?? null; },
+      setItem(key, value) { if (blockedStorage) throw Error('Denied'); preferences.set(key, value); },
     },
-    IntersectionObserver: class { observe() {} disconnect() {} },
+    document: {
+      querySelector: () => settings,
+      createElement: () => ({ setAttribute(name, value) { this[name] = value; } }),
+      head: { append(script) { scripts.push(script); } },
+      get cookie() { return 'dolegram_ga=one; dolegram_ga_YPHXN0WKW5=two; dolegram_garden=keep; other=keep'; },
+      set cookie(value) { cookies.push(value); },
+    },
   });
-  vm.runInContext(source, context);
-  return { window, scripts, writes, node, track: (name) => context.track(name),
-    choose: (accept) => node(accept ? '#analytics-accept' : '#analytics-decline').handlers.click(),
-    commands: () => Array.from(window.dataLayer || [], (args) => Array.from(args)),
-  };
+  return { scripts, cookies, settings, preferences, click: () => settings.handlers.click(), reloads: () => reloads };
 }
 
-test('analytics sends nothing before consent or after stored refusal', () => {
-  for (const saved of [null, 'denied']) {
-    const app = setup({ saved });
-    app.track('install_start');
+test('production defaults to one official cookieless module with a public token', () => {
+  const app = setup();
+  assert.equal(app.scripts.length, 1);
+  assert.equal(app.scripts[0].src, 'https://static.cloudflareinsights.com/beacon.min.js');
+  assert.equal(app.scripts[0].type, 'module');
+  assert.match(JSON.parse(app.scripts[0]['data-cf-beacon']).token, /^[a-f0-9]{32}$/);
+  assert.equal(app.settings.textContent, 'Disable analytics');
+});
+test('saved opt-out and legacy GA refusal prevent loading', () => {
+  for (const options of [{ saved: 'true' }, { legacy: 'denied' }]) {
+    const app = setup(options);
     assert.equal(app.scripts.length, 0);
-    assert.equal(app.commands().length, 0);
+    assert.equal(app.settings.textContent, 'Enable analytics');
+  }
+  assert.equal(setup({ saved: 'false', legacy: 'denied' }).scripts.length, 1);
+});
+test('privacy signals prevent loading and cannot be overridden by the footer', () => {
+  for (const privacy of [{ globalPrivacyControl: true }, { doNotTrack: '1' }]) {
+    const app = setup({ privacy });
+    assert.equal(app.scripts.length, 0);
+    assert.equal(app.settings.disabled, true);
+    assert.equal(app.settings.textContent, 'Analytics off');
   }
 });
-test('acceptance loads one tag, excludes private URL data and disables advertising', () => {
-  const app = setup(); app.choose(true); app.choose(true);
-  assert.equal(app.scripts.length, 1);
-  const configs = app.commands().filter(([name]) => name === 'config');
-  assert.equal(configs.length, 1);
-  const config = configs[0][2];
-  assert.equal(config.page_location, 'https://vingeraycn.github.io/dolegram/');
-  assert.equal(config.page_referrer, 'https://example.com');
-  assert.equal(config.allow_google_signals, false);
-  assert.equal(config.allow_ad_personalization_signals, false);
-  assert.equal(config.cookie_path, '/dolegram');
-  app.track('install_prompt_copy'); app.track('private_message');
-  assert.deepEqual(app.commands().filter(([name]) => name === 'event').map(([, name]) => name), ['install_prompt_copy']);
-});
-test('withdrawal blocks events and removes only scoped website cookies', () => {
-  const app = setup({ saved: 'granted' }); app.choose(false);
-  const count = app.commands().length;
-  app.track('install_start');
-  assert.equal(app.commands().length, count);
-  assert.equal(app.window['ga-disable-G-YPHXN0WKW5'], true);
-  assert.equal(app.writes.length, 2);
-  assert.ok(app.writes.every((value) => value.startsWith('dolegram_ga') && value.includes('Path=/dolegram;')));
-});
-test('storage denial preserves session-only explicit consent', () => {
+test('unavailable preference storage fails closed', () => {
   const app = setup({ blockedStorage: true });
   assert.equal(app.scripts.length, 0);
-  app.choose(true); assert.equal(app.scripts.length, 1);
-  app.choose(false); assert.equal(app.window['ga-disable-G-YPHXN0WKW5'], true);
+  assert.equal(app.settings.disabled, true);
 });
-test('local previews and forks never send to the production property', () => {
-  const app = setup({ hostname: 'localhost', saved: 'granted' });
-  app.choose(true); app.track('install_start');
-  assert.equal(app.scripts.length, 0);
-  assert.equal(app.commands().length, 0);
+test('only the exact production host and path load analytics', () => {
+  for (const options of [{ hostname: 'localhost' }, { hostname: 'fork.github.io' }, { pathname: '/another-project/' }]) {
+    const app = setup(options);
+    assert.equal(app.scripts.length, 0);
+    assert.equal(app.cookies.length, 0);
+    assert.equal(app.settings.hidden, true);
+  }
 });
-test('blocked Google script does not break interactions or withdrawal', () => {
-  const app = setup(); app.choose(true);
-  app.track('install_start'); app.choose(false);
-  assert.equal(app.window['ga-disable-G-YPHXN0WKW5'], true);
+test('opt-out persists and reloads to unload vendor listeners; opt-in reverses it', () => {
+  const app = setup(); app.click();
+  assert.equal(app.preferences.get('dolegram.analytics-disabled.v1'), 'true');
+  assert.equal(app.reloads(), 1);
+  const optedOut = setup({ saved: 'true' }); optedOut.click();
+  assert.equal(optedOut.preferences.get('dolegram.analytics-disabled.v1'), 'false');
+  assert.equal(optedOut.reloads(), 1);
+});
+test('migration expires only former scoped GA cookies', () => {
+  const app = setup();
+  assert.equal(app.cookies.length, 2);
+  assert.ok(app.cookies.every(value => value.includes('Path=/dolegram; Domain=vingeraycn.github.io;')));
+  assert.ok(app.cookies.every(value => !value.includes('garden') && !value.includes('other')));
+});
+test('a blocked vendor script does not prevent opting out', () => {
+  const app = setup(); // No vendor script executes in this harness.
+  assert.doesNotThrow(() => app.click());
+  assert.equal(app.reloads(), 1);
 });
