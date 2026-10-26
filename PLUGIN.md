@@ -6,10 +6,10 @@ The backend alone is not a completed cloud plugin installation. Hosting, account
 
 The [official plugin package guide](https://developers.openai.com/plugins/build/plugins) and Plugin Creator package requirements define portable Agent Plugins 1.0 packages with root `plugin.json`, `mcp.json`, and `skills/`. MCP authentication belongs in each server's `extensions.com.openai.auth`; a fixed bearer secret uses `type: api_key` and `headerScheme: bearer`. Credentials must never be included in the package.
 
-`plugin-template/dotg/` contains a manifest, the response workflow skill, and an explicitly noninstallable `mcp.json.example`. A real endpoint is intentionally absent because this template is not bound to a public deployment. After a separately authorized deployment and independent endpoint verification, the Agent can prepare package files with the implemented helper:
+`plugin-template/dolegram/` contains a manifest, the response workflow skill, and an explicitly noninstallable `mcp.json.example`. A real endpoint is intentionally absent because this template is not bound to a public deployment. After a separately authorized deployment and independent endpoint verification, the Agent can prepare package files with the implemented helper:
 
 ```sh
-python3 scripts/prepare-plugin.py --endpoint https://YOUR_VERIFIED_HOST/mcp --output plugin-build/dotg
+python3 scripts/prepare-plugin.py --endpoint https://YOUR_VERIFIED_HOST/mcp --output plugin-build/dolegram
 ```
 
 Replace the uppercase placeholder with the verified backend hostname first. The helper refuses invalid placeholder domains and existing output directories, adds `mcp.json`, and does not contact, deploy, upload, or install anything. Its endpoint syntax validation does not prove ownership, reachability or TLS safety; those must already have been checked. The output is ignored by Git.
@@ -17,7 +17,7 @@ Replace the uppercase placeholder with the verified backend hostname first. The 
 The resulting package layout is:
 
 ```text
-dotg/
+dolegram/
   plugin.json
   mcp.json
   skills/telegram-response/SKILL.md

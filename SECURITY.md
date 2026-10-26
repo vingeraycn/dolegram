@@ -19,6 +19,6 @@ Duplicate successful writes return their stored result. Ambiguous writes fail cl
 
 ## Report a vulnerability privately
 
-Do not open a public issue with credentials, callback URLs, message contents, or an exploit against a real user's installation. Use [GitHub private vulnerability reporting](https://github.com/vingeraycn/dotg/security/advisories/new) to contact the repository maintainers. Include the affected version, a redacted description, impact, and a synthetic reproduction. Never include live credentials or another person's message data. If the private form is unavailable, open an issue requesting a private contact route without disclosing vulnerability details.
+Do not open a public issue with credentials, callback URLs, message contents, or an exploit against a real user's installation. Use [GitHub private vulnerability reporting](https://github.com/vingeraycn/dolegram/security/advisories/new) to contact the repository maintainers. Include the affected version, a redacted description, impact, and a synthetic reproduction. Never include live credentials or another person's message data. If the private form is unavailable, open an issue requesting a private contact route without disclosing vulnerability details.
 
 The current 0.1 public beta receives best-effort security fixes. There is no guaranteed response time; use the latest published revision and review its release notes.

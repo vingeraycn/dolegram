@@ -18,4 +18,4 @@ Identical successful write retries are idempotent. If rate limited, respect the 
 
 ## Scope of this recovery
 
-The bounded pending list helps recover messages during a later event-triggered run; it is not a background scheduler or a replay cursor. Historical events are not replayed when a subscription is created. However, authorized unanswered messages already in storage can be picked up by bounded recovery during a later event-triggered run. Host batching and scheduling remain outside dotg's control. A successful callback alone does not prove the handler ran.
+The bounded pending list helps recover messages during a later event-triggered run; it is not a background scheduler or a replay cursor. Historical events are not replayed when a subscription is created. However, authorized unanswered messages already in storage can be picked up by bounded recovery during a later event-triggered run. Host batching and scheduling remain outside dolegram's control. A successful callback alone does not prove the handler ran.

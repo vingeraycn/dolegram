@@ -1,6 +1,6 @@
 # Reconcile a reply observed in Telegram
 
-A transport timeout cannot tell dotg whether Telegram accepted a write. The backend blocks that message rather than send a possible duplicate. This offline tool supports one recovery case: an authorized operator independently finds the exact Bot reply in Telegram and records the successful outcome. It never sends, edits, deletes, infers that a missing reply was not sent, or clears a blocked intent for retry.
+A transport timeout cannot tell dolegram whether Telegram accepted a write. The backend blocks that message rather than send a possible duplicate. This offline tool supports one recovery case: an authorized operator independently finds the exact Bot reply in Telegram and records the successful outcome. It never sends, edits, deletes, infers that a missing reply was not sent, or clears a blocked intent for retry.
 
 This procedure is for the standalone polling installation, using Python 3.11 or newer. It is not a Sites/D1 repair tool. Synthetic tests cover an actual SQLite snapshot, exclusive lease, refusal paths, and the real Bridge's successful retry and next-edit behavior. Production ambiguous-write recovery has not been exercised deliberately.
 
@@ -21,7 +21,7 @@ python3 scripts/reconcile.py inspect \
 
 Inspection is read-only and can run while the backend is active. The output is mode 0600 and must not already exist. It contains private reply text and identifiers: do not commit, upload or paste it into chat. The command prints only fixed guidance. It does not open the application Store or convert pending operations into uncertain ones.
 
-The file contains a `reference` copied from stored intent, a fingerprint of the original message state, and `observed: null`. **Reference data proves only what dotg attempted. It does not prove what Telegram received.**
+The file contains a `reference` copied from stored intent, a fingerprint of the original message state, and `observed: null`. **Reference data proves only what dolegram attempted. It does not prove what Telegram received.**
 
 ## 2. Independently verify the reply
 

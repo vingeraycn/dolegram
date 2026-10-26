@@ -1,4 +1,4 @@
-# Install dotg with an Agent
+# Install dolegram with an Agent
 
 For Codex or ChatGPT desktop, start with [Desktop Agent installation](docs/desktop-install.md): check actual local capabilities and explain necessary owner participation first. Return here for the installation procedure.
 
@@ -8,7 +8,7 @@ This guide is for an Agent operating on the owner's Mac. Complete the authorized
 
 Success means an allowlisted Telegram message reaches the existing Dot and receives a real Bot reply, with a long answer edited in place. A healthy backend, Tunnel, installed connection, or accepted callback alone is not success.
 
-Use one Bot consumer, one dotg database, one dedicated Tunnel profile, and one existing or newly authorized private connection. Keep the previous consumer and a rollback path. Never publish the repository, expose the backend, widen access, or replace the user's existing model/integration as an installation shortcut.
+Use one Bot consumer, one dolegram database, one dedicated Tunnel profile, and one existing or newly authorized private connection. Keep the previous consumer and a rollback path. Never publish the repository, expose the backend, widen access, or replace the user's existing model/integration as an installation shortcut.
 
 ## 1. Inspect and record the starting point
 
@@ -19,8 +19,8 @@ Confirm only information that cannot be obtained from authorized local sources: 
 For a fresh checkout:
 
 ```sh
-git clone https://github.com/vingeraycn/dotg.git
-cd dotg
+git clone https://github.com/vingeraycn/dolegram.git
+cd dolegram
 npm ci --ignore-scripts
 npm run check
 npm test
@@ -72,13 +72,13 @@ Verify through the real host: discovery, all four tools, `events/list`, a safe t
 
 ## 5. Hand over exactly one consumer
 
-Prepare the supported stop/resume actions for the old Telegram consumer and identify any effects on shared services. Reuse existing authorization; ask only for an additional material effect. Pause that consumer without deleting its configuration. Confirm it has stopped, then restart dotg with:
+Prepare the supported stop/resume actions for the old Telegram consumer and identify any effects on shared services. Reuse existing authorization; ask only for an additional material effect. Pause that consumer without deleting its configuration. Confirm it has stopped, then restart dolegram with:
 
 ```sh
 DOTG_ENABLE_POLLING=1 npm start
 ```
 
-Never run two `getUpdates` consumers to test which one wins. dotg checks Bot identity and empty webhook status before polling, and stops intake on mismatch, rejected credentials, a webhook, or a Telegram conflict. It never deletes webhooks or drops pending updates. Follow [OPERATIONS.md](OPERATIONS.md) if intake stops.
+Never run two `getUpdates` consumers to test which one wins. dolegram checks Bot identity and empty webhook status before polling, and stops intake on mismatch, rejected credentials, a webhook, or a Telegram conflict. It never deletes webhooks or drops pending updates. Follow [OPERATIONS.md](OPERATIONS.md) if intake stops.
 
 ## 6. Perform real acceptance
 

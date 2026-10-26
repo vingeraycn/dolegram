@@ -4,7 +4,7 @@ This repository is a new implementation written against the official MCP Events 
 
 A targeted recovery investigation did not locate the original source through local files or supported project/plugin lookup. This does not prove that no independent backup exists. The owner authorized reimplementation. No third-party Telegram bridge was substituted as the source.
 
-The private repository was renamed from `telegram-dot-plugin` to `dotg` with history preserved. The old local directory name may still exist and is not evidence of a wrong repository. Current source, documentation and built-in status copy use English.
+The repository was originally renamed from `telegram-dot-plugin` to `dotg`, then publicly renamed to `dolegram`, with history preserved. The old local directory name may still exist and is not evidence of a wrong repository. Current source, documentation and built-in status copy use English.
 
 The private Mac route has since completed real connection, Events and reply/edit acceptance. See TUNNEL.md for the evidence boundary; Sites remains source-only.
 

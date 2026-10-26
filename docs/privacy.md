@@ -1,21 +1,21 @@
 # Data handling and publication privacy
 
-This describes the supported local Mac route. dotg is not offline: Telegram and the connected ChatGPT host process conversation data.
+This describes the supported local Mac route. dolegram is not offline: Telegram and the connected ChatGPT host process conversation data.
 
 | Destination | Data and purpose |
 | --- | --- |
 | Telegram Bot API | The Bot token authenticates requests to Telegram. Intake retrieves messages; replies, edits, drafts and chat actions target the allowlisted private chat. |
 | Host-provided MCP Events callback | Signed events include the message key, private chat ID and full incoming text. A signature is transmitted, not the signing secret. |
 | ChatGPT through the private MCP Tunnel | Authorized tools return message content, identifiers, timestamps and stored reply state, and accept reply text. |
-| Local configuration | Bot token, independent MCP bearer, owner and allowlist in an owner-only file. dotg does not encrypt this file. |
-| Local SQLite database | Messages, replies, delivery state, callback URLs and subscription signing secrets. File permissions protect access; dotg does not encrypt the database. |
+| Local configuration | Bot token, independent MCP bearer, owner and allowlist in an owner-only file. dolegram does not encrypt this file. |
+| Local SQLite database | Messages, replies, delivery state, callback URLs and subscription signing secrets. File permissions protect access; dolegram does not encrypt the database. |
 | macOS Keychain | The approved Tunnel runtime key when using the dedicated launcher. Other configuration and messages are not automatically stored in Keychain. |
 
 The launcher passes the approved runtime key and upstream bearer in the dedicated client's process environment. They are not command-line literals, but remain sensitive process memory. Protect the local account and runtime. Application source has no separate analytics integration; this does not establish the behavior or retention policies of Telegram, ChatGPT, the Tunnel client, browser or operating system.
 
 Callback transport validates public HTTPS destinations, rejects redirects, pins DNS results and verifies TLS hostnames. A custom DNS resolver, if configured, receives hostname lookups, not message bodies. Only create subscriptions through the intended host. Backend bearer possession grants privileged access; callback validation does not replace credential protection.
 
-Retention and backups are manual. The [snapshot tool](backup.md) creates private plaintext database copies containing the same sensitive data; configuration and Keychain credentials are excluded. It never uploads snapshots or silently deletes them. Keep configuration, database, installation notes and backups out of Git and sharing workflows. Deleting a Telegram conversation does not automatically delete local dotg records. Read [OPERATIONS.md](../OPERATIONS.md) before cleanup that could affect deduplication or reply recovery.
+Retention and backups are manual. The [snapshot tool](backup.md) creates private plaintext database copies containing the same sensitive data; configuration and Keychain credentials are excluded. It never uploads snapshots or silently deletes them. Keep configuration, database, installation notes and backups out of Git and sharing workflows. Deleting a Telegram conversation does not automatically delete local dolegram records. Read [OPERATIONS.md](../OPERATIONS.md) before cleanup that could affect deduplication or reply recovery.
 
 ## Before publication
 

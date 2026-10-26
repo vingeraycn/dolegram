@@ -1,10 +1,10 @@
 # Desktop Agent installation
 
-Use this entry point in Codex or ChatGPT Work on the Mac that will run dotg. Computer Use helps with account pages and Telegram; local execution handles configuration, processes and checks. This is an Agent runbook, not a shipped unattended installer.
+Use this entry point in Codex or ChatGPT Work on the Mac that will run dolegram. Computer Use helps with account pages and Telegram; local execution handles configuration, processes and checks. This is an Agent runbook, not a shipped unattended installer.
 
 ## One prompt
 
-> Read https://github.com/vingeraycn/dotg/blob/main/docs/desktop-install.md and install dotg on this Mac for my Telegram Bot and existing Dot. First check your available local tools and explain the specific actions you will need from me. Then use local tools and Computer Use to complete the authorized setup, reuse existing resources, protect secrets, preserve rollback, and verify a real Telegram reply and in-place edits. Continue automatically after each required user action; do not hand me configuration steps you can safely complete.
+> Read https://github.com/vingeraycn/dolegram/blob/main/docs/desktop-install.md and install dolegram on this Mac for my Telegram Bot and existing Dot. First check your available local tools and explain the specific actions you will need from me. Then use local tools and Computer Use to complete the authorized setup, reuse existing resources, protect secrets, preserve rollback, and verify a real Telegram reply and in-place edits. Continue automatically after each required user action; do not hand me configuration steps you can safely complete.
 
 Private repository access is currently required. The Mac must stay available while the service runs. An opt-in [login service](service.md) can manage processes after login; locked or confirmation-only Keychain access can prevent automatic Tunnel recovery. Explain and test these conditions before promising unattended operation. Host features and scheduling vary by account, and no fixed response time is promised.
 

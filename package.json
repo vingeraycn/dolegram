@@ -1,5 +1,5 @@
 {
-  "name": "dotg",
+  "name": "dolegram",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -26,5 +26,6 @@
     "eslint": "10.13.0",
     "typescript": "7.0.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "description": "Use ChatGPT Dot in Telegram."
 }

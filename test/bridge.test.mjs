@@ -356,15 +356,15 @@ test('callback transport pins DNS results and returns redirects without followin
 });
 
 test('plugin preparation generates credential-free official bearer configuration', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'dotg-package-test-'));
+  const directory = mkdtempSync(join(tmpdir(), 'dolegram-package-test-'));
   try {
-    const output = join(directory, 'dotg');
+    const output = join(directory, 'dolegram');
     execFileSync('python3', ['scripts/prepare-plugin.py', '--endpoint', 'https://synthetic.example.test/mcp', '--output', output]);
     const manifest = JSON.parse(readFileSync(join(output, 'plugin.json'), 'utf8'));
     const mcp = JSON.parse(readFileSync(join(output, 'mcp.json'), 'utf8'));
-    assert.equal(manifest.name, 'dotg');
-    assert.deepEqual(mcp.mcpServers.dotg.extensions['com.openai'].auth, { type: 'api_key', headerScheme: 'bearer' });
-    assert.equal(mcp.mcpServers.dotg.url, 'https://synthetic.example.test/mcp');
+    assert.equal(manifest.name, 'dolegram');
+    assert.deepEqual(mcp.mcpServers.dolegram.extensions['com.openai'].auth, { type: 'api_key', headerScheme: 'bearer' });
+    assert.equal(mcp.mcpServers.dolegram.url, 'https://synthetic.example.test/mcp');
     assert(!JSON.stringify(mcp).includes(config.mcpBearerToken));
   } finally { rmSync(directory, { recursive: true }); }
 });

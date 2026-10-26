@@ -1,8 +1,8 @@
 # Private backups and staged recovery
 
-The Agent can create and verify a consistent SQLite snapshot while dotg is running. Recovery is deliberately staged: it never replaces the live database or starts a consumer. An older snapshot cannot establish what Telegram or ChatGPT did afterward, so restoring it directly could repeat an answer or lose acknowledged messages.
+The Agent can create and verify a consistent SQLite snapshot while dolegram is running. Recovery is deliberately staged: it never replaces the live database or starts a consumer. An older snapshot cannot establish what Telegram or ChatGPT did afterward, so restoring it directly could repeat an answer or lose acknowledged messages.
 
-This tool supports the local polling route. Use Python 3.11 or newer and a dotg release containing `scripts/backup.py` and the recovery guards in `src/runtime.mjs`. Do not open a restored database with an older release that lacks these guards. This is a manual operator workflow; scheduled backups, retention deletion and automatic reconciliation are not implemented.
+This tool supports the local polling route. Use Python 3.11 or newer and a dolegram release containing `scripts/backup.py` and the recovery guards in `src/runtime.mjs`. Do not open a restored database with an older release that lacks these guards. This is a manual operator workflow; scheduled backups, retention deletion and automatic reconciliation are not implemented.
 
 ## Create and verify
 

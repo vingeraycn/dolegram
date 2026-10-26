@@ -15,7 +15,7 @@ Do not tunnel the synthetic bridge used internally by `verify:local`. Public rea
 
 ## Existing routes must not be repurposed
 
-Inspect only the selected service configuration's nonsecret ingress metadata, never certificate or credential-file contents. Existing named tunnels may expose unrelated applications. If no running, appropriately scoped route exists, do not restart a multi-service tunnel, repurpose its hostname, change its DNS, or read its stored credentials merely to get dotg online.
+Inspect only the selected service configuration's nonsecret ingress metadata, never certificate or credential-file contents. Existing named tunnels may expose unrelated applications. If no running, appropriately scoped route exists, do not restart a multi-service tunnel, repurpose its hostname, change its DNS, or read its stored credentials merely to get dolegram online.
 
 For this test, the proposed fallback is a new, temporary accountless Quick Tunnel with a dedicated empty configuration. This does not require buying hosting or a domain, using an existing account certificate, or manually creating an API token. Cloudflared negotiates transient tunnel credentials in memory. Starting it is still a new public network path and requires explicit confirmation.
 
@@ -28,7 +28,7 @@ For this test, the proposed fallback is a new, temporary accountless Quick Tunne
 | Active application routes | `POST /mcp` and `POST /telegram/webhook`; all unrelated paths and methods return 404. |
 | Reachability-only phase | Both recognized routes return 401 unconditionally; there are no credentials or Bot actions. |
 | Live phase, separately approved | `/mcp` requires the MCP bearer secret; Telegram intake requires its configured secret header and explicit private allowlist. |
-| Diagnostics | Cloudflared metrics bind to `127.0.0.1` on an ephemeral port; management diagnostics are disabled and never routed by dotg. |
+| Diagnostics | Cloudflared metrics bind to `127.0.0.1` on an ephemeral port; management diagnostics are disabled and never routed by dolegram. |
 | Other local services | DSH, model gateways, existing tunnel origins and the rest of the Mac are not forwarded. |
 
 Cloudflare terminates the public HTTPS connection and proxies the requests through its encrypted tunnel to local HTTP. That third-party processing scope is part of the approval. This path does not require an inbound router port-forward or disabling a firewall. If outbound connectivity is blocked, report the exact failed connection instead of changing network security settings.

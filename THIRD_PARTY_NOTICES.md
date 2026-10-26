@@ -1,6 +1,6 @@
 # Third-party notices
 
-This inventory covers every production dependency in the committed `package-lock.json`, including transitive dependencies. The notices below reproduce their license texts. Keep this file with redistributed dotg bundles, alongside dotg's own `LICENSE`.
+This inventory covers every production dependency in the committed `package-lock.json`, including transitive dependencies. The notices below reproduce their license texts. Keep this file with redistributed dolegram bundles, alongside dolegram's own `LICENSE`.
 
 Development tools and separately installed software (Node.js, Python, Swift and the official Tunnel client) have their own licenses and are not redistributed by this repository. If you distribute those tools or a complete installation image, include their notices as well. Brand and image provenance is documented in [docs/assets/README.md](docs/assets/README.md); software licenses do not grant trademark rights.
 

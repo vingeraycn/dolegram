@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Renamed the project from dotg to **dolegram**: Use ChatGPT Dot in Telegram.
+- Updated the repository, package, portable template, documentation and visual branding.
+- Preserved legacy runtime identifiers and existing installations; see [compatibility notes](docs/rename.md).
+- The original v0.1.0 tag remains unchanged as the historical public beta snapshot.
+
 ## 0.1.0 — Public Beta — 2026-10-25
 
 Talk to your existing ChatGPT Dot from Telegram through a bridge running on your Mac. This first public beta targets low-volume, single-owner installations with access to ChatGPT private Tunnels and MCP Events.

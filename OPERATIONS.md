@@ -1,4 +1,4 @@
-# Operate dotg
+# Operate dolegram
 
 Keep an ignored local record of checkout, Node/client versions, runtime directory, process IDs, credential expiration, connection, subscription, and previous-consumer resume command. Do not store secret values in the record.
 
@@ -31,10 +31,10 @@ Use the real host's `get_bridge_status` to check subscription status, received m
 ## Clean restart and upgrade
 
 1. Run automated checks on the reviewed source. Prepare a separate versioned release directory with its own locked dependencies (`npm ci --ignore-scripts`); preserve the previous release and nonsecret launch configuration. Do not run production from a checkout being edited, or share its mutable `node_modules` directory: an automatic restart could otherwise load unreviewed changes.
-2. Send SIGTERM to the exact dotg backend. It aborts long polling and activity requests, waits for in-flight callback and HTTP work, closes SQLite, and releases its lock.
+2. Send SIGTERM to the exact dolegram backend. It aborts long polling and activity requests, waits for in-flight callback and HTTP work, closes SQLite, and releases its lock.
 3. Verify the process and listener are gone. Current releases use an OS-managed `.lease`; its file remains after exit and must never be deleted. A legacy `.lock` blocks the new launcher until the old backend stops cleanly. Never delete an active lock or start a second poller to force recovery.
 4. Create and verify a [private snapshot](docs/backup.md). The supplied tool also supports an online backup before shutdown; preserve a final snapshot at handover when possible. It contains messages, callback secrets, and reply state; do not upload it. A live SQLite copy requires SQLite's backup mechanism, not a casual file copy.
-5. Start the reviewed backend with the same owner, configuration and database. Retain `DOTG_ENABLE_POLLING=1` only if dotg is the approved consumer. Verify host tool access and perform an authorized real smoke test.
+5. Start the reviewed backend with the same owner, configuration and database. Retain `DOTG_ENABLE_POLLING=1` only if dolegram is the approved consumer. Verify host tool access and perform an authorized real smoke test.
 
 For read-only diagnosis use SQLite read-only mode. Do not instantiate the application's `Store` on a live database: its startup recovery changes pending writes to uncertain. Do not edit production state to make a test pass.
 
@@ -44,7 +44,7 @@ Restoring an old database is a separate operation from rolling back code. Use [s
 
 ## Uncertain writes and partial answers
 
-A Telegram timeout may mean the message was sent even though the response was lost. dotg records uncertain state and blocks new writes to prevent duplicates. The [offline reconciliation tool](docs/reconciliation.md) can record an independently observed successful reply, after exact evidence matching and a verified pre-change snapshot. It refuses a running backend and never resends or infers non-delivery. Do not clear state or invent a message ID.
+A Telegram timeout may mean the message was sent even though the response was lost. dolegram records uncertain state and blocks new writes to prevent duplicates. The [offline reconciliation tool](docs/reconciliation.md) can record an independently observed successful reply, after exact evidence matching and a verified pre-change snapshot. It refuses a running backend and never resends or infers non-delivery. Do not clear state or invent a message ID.
 
 A confirmed sent nonfinal answer can resume from `read_telegram_message`'s exact `reply.text`, `reply.messageId` and revision. Follow [the handler contract](docs/dot-task.md). A rate-limited rejected write may retry after its deadline; an uncertain write may not.
 
@@ -56,6 +56,6 @@ All accepted messages and reply/deduplication state remain in the database. Stor
 
 ## Rollback to the previous consumer
 
-Stop dotg and wait for its outstanding poll to abort. Verify it has stopped before resuming the previous consumer using its recorded supported control. Keep that consumer's configuration intact throughout the trial; do not stop unrelated services. Preserve dotg's private database and reconcile uncertain replies. Telegram updates already acknowledged by dotg cannot be restored to the old consumer.
+Stop dolegram and wait for its outstanding poll to abort. Verify it has stopped before resuming the previous consumer using its recorded supported control. Keep that consumer's configuration intact throughout the trial; do not stop unrelated services. Preserve dolegram's private database and reconcile uncertain replies. Telegram updates already acknowledged by dolegram cannot be restored to the old consumer.
 
-If retiring dotg, remove its host subscription and stop only its dedicated Tunnel after the previous consumer is verified. Credential revocation and removal of private data are separate owner-authorized actions.
+If retiring dolegram, remove its host subscription and stop only its dedicated Tunnel after the previous consumer is verified. Credential revocation and removal of private data are separate owner-authorized actions.
