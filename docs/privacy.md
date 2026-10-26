@@ -26,3 +26,11 @@ Git author/committer names and emails are visible with published history. Use th
 No credential-pattern matches is evidence with limits, not a guarantee. Compare known secrets without printing them, inspect non-text assets and review data flows. Do not publish personal values in audit reports. For sensitive history, prepare an owner-approved cleanup or clean public export; never silently rewrite the working repository.
 
 See [SECURITY.md](../SECURITY.md) and [release readiness](release-readiness.md). The experimental [Sites adapter](../sites/README.md) has separate hosted storage/identity requirements and is not the supported local installation route.
+
+## Website analytics
+
+The public dolegram homepage offers optional Google Analytics 4 measurement. If you select **Allow analytics**, Google receives page visits, referring website origins, browser/device information, approximate location derived by Google, session identifiers, and predefined interactions such as installation-link clicks, successful prompt copies, repository clicks, and demo replays. Google receives your IP address as part of the network connection. No Telegram or Dot messages, Bot credentials, clipboard contents, or installation prompt text are included in our analytics events.
+
+Before you allow analytics, the site does not load the Google tag or send analytics requests. Advertising features are disabled. Our page-location field excludes query strings and fragments. Our referrer field excludes referring paths and queries. A local preference remembers your choice; analytics cookies are scoped to this website and expire after 90 days unless refreshed. Choose **Analytics settings** in the footer and **No thanks** to stop future collection and remove this site's analytics cookies. This does not delete previously collected reports.
+
+See [how Google uses information from sites that use its services](https://policies.google.com/technologies/partner-sites). GitHub Pages hosting and normal browser/network requests remain separate from optional analytics. The Bot application itself has no Google Analytics integration.
