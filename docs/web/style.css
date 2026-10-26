@@ -258,6 +258,9 @@ h1 span {
   gap: 18px;
   align-items: center;
 }
+.selling-points span {
+  white-space: nowrap;
+}
 .button {
   display: inline-flex;
   justify-content: center;
