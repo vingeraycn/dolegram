@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#090b10" />
+    <meta
+      name="description"
+      content="Use ChatGPT Dot in Telegram. An open-source bridge on your Mac, with Agent-guided setup and replies that grow in place."
+    />
+    <meta
+      property="og:title"
+      content="dolegram — Use ChatGPT Dot in Telegram."
+    />
+    <meta
+      property="og:description"
+      content="Your personal assistant, one message away. Open-source. Public beta."
+    />
+    <meta
+      property="og:image"
+      content="https://vingeraycn.github.io/dolegram/web/hero.png"
+    />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href="https://vingeraycn.github.io/dolegram/" />
+    <link rel="icon" href="assets/dolegram-icon.png" type="image/png" />
+    <link rel="stylesheet" href="web/style.css" />
+    <script src="web/site.js" defer></script>
+    <title>dolegram — Use ChatGPT Dot in Telegram.</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="atmosphere" aria-hidden="true"><i></i><i></i></div>
+    <header class="header wrap">
+      <a class="brand" href="#" aria-label="dolegram home"
+        ><img
+          src="assets/dolegram-icon.png"
+          width="42"
+          height="42"
+          alt=""
+        /><span>dolegram</span></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="https://github.com/vingeraycn/dolegram">GitHub</a>
+        <button
+          class="motion-button"
+          id="motion"
+          type="button"
+          aria-label="Pause animation"
+          aria-pressed="false"
+          title="Pause animation"
+          hidden
+        >
+          <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 6v12M16 6v12" /></svg
+          ><svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 6 9 6-9 6z" />
+          </svg>
+        </button>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title">
+            Use<br />ChatGPT Dot<br /><span>in Telegram.</span>
+          </h1>
+          <p>Your personal assistant, one message away.</p>
+          <div class="actions">
+            <a class="button primary" href="#install"
+              >Get started
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 12h15m-6-6 6 6-6 6" /></svg></a
+            ><a
+              class="button secondary"
+              href="https://github.com/vingeraycn/dolegram"
+              >View GitHub</a
+            >
+          </div>
+        </div>
+        <div class="hero-scene">
+          <img
+            class="hero-art"
+            src="web/hero.png"
+            alt="An ice-blue paper plane at the heart of a luminous orbit, connecting Telegram and Dot."
+            width="1024"
+            height="1024"
+            fetchpriority="high"
+          />
+          <div class="orbit orbit-one" aria-hidden="true"><i></i></div>
+          <div class="orbit orbit-two" aria-hidden="true"><i></i></div>
+          <div class="conversation" aria-label="Illustrative conversation">
+            <div class="bubble question">Help me untangle this idea.</div>
+            <div class="bubble answer" id="demo-answer">
+              Of course. Let’s think it through.
+            </div>
+            <div class="demo-controls">
+              <span>Illustrative demo</span
+              ><button id="replay" type="button" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 10a8 8 0 1 1 1 8M4 4v6h6" /></svg
+                >Replay
+              </button>
+            </div>
+          </div>
+        </div>
+        <a class="scroll-cue" href="#how-it-works"
+          ><span>A familiar chat. Your own Dot.</span
+          ><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" /></svg
+        ></a>
+      </section>
+      <section
+        class="connection wrap"
+        id="how-it-works"
+        aria-labelledby="connection-title"
+      >
+        <h2 id="connection-title">
+          A familiar chat.<br class="mobile-break" />
+          Your own Dot.
+        </h2>
+        <div
+          class="route"
+          aria-label="Telegram sends messages through your Mac to ChatGPT Dot; replies return to Telegram."
+        >
+          <div class="route-stop">
+            <div class="node telegram">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M21.5 3.2 18.2 20c-.2 1-1 1.2-1.8.6l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.3L5.6 13.1.7 11.5c-1.1-.3-1.1-1.1.2-1.6L20 2.5c.9-.3 1.7.2 1.5.7Z"
+                />
+              </svg>
+            </div>
+            <span>Telegram</span>
+          </div>
+          <div class="route-line" aria-hidden="true"><i></i></div>
+          <div class="route-stop">
+            <div class="node mac">
+              <img
+                src="assets/dolegram-icon.png"
+                width="96"
+                height="96"
+                alt=""
+              />
+            </div>
+            <span>Your Mac</span>
+          </div>
+          <div class="route-line reverse" aria-hidden="true"><i></i></div>
+          <div class="route-stop">
+            <div class="node dot" aria-hidden="true"></div>
+            <span>ChatGPT Dot</span>
+          </div>
+        </div>
+        <p class="muted">Messages go out. Replies come back, in place.</p>
+      </section>
+      <section
+        class="install wrap"
+        id="install"
+        aria-labelledby="install-title"
+      >
+        <h2 id="install-title">
+          One prompt.<br />Your Agent takes it from here.
+        </h2>
+        <div class="prompt-panel">
+          <div class="panel-top" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="prompt-body">
+            <label class="sr-only" for="install-prompt"
+              >Installation prompt to give your Agent</label
+            ><textarea id="install-prompt" readonly spellcheck="false" rows="5">
+Read https://github.com/vingeraycn/dolegram/blob/main/docs/desktop-install.md and install dolegram on this Mac for my Telegram Bot and existing ChatGPT Dot. First explain which actions require me, then complete setup using local tools and Computer Use. Reuse existing resources, protect secrets, preserve rollback, and verify a real reply and in-place message updates.</textarea
+            ><button
+              class="button primary copy-button"
+              id="copy"
+              type="button"
+              hidden
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="8" y="8" width="12" height="13" rx="2" />
+                <path
+                  d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"
+                /></svg
+              ><span>Copy install prompt</span>
+            </button>
+          </div>
+        </div>
+        <p
+          class="copy-status"
+          id="copy-status"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <p class="install-note">
+          For Codex or ChatGPT on your Mac.<br class="mobile-break" />
+          Account access and permissions required.
+        </p>
+        <a
+          class="guide-link"
+          href="https://github.com/vingeraycn/dolegram/blob/main/docs/desktop-install.md"
+          >Read the guide
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 12h15m-6-6 6 6-6 6" /></svg
+        ></a>
+        <p class="beta-note">
+          Public beta. Your Mac must stay available. Reply times vary; demo
+          timing is illustrative.
+        </p>
+      </section>
+    </main>
+    <div class="horizon" aria-hidden="true"></div>
+    <footer class="footer wrap">
+      <a class="brand" href="#"
+        >dolegram<span class="brand-dot" aria-hidden="true"></span></a
+      ><a href="https://github.com/vingeraycn/dolegram/releases/tag/v0.1.0"
+        >Public beta · MIT</a
+      >
+      <div>
+        <a
+          href="https://github.com/vingeraycn/dolegram/blob/main/docs/privacy.md"
+          >Privacy</a
+        ><a href="https://github.com/vingeraycn/dolegram">GitHub</a>
+      </div>
+      <p>Independent project. Not affiliated with OpenAI or Telegram.</p>
+    </footer>
+  </body>
+</html>

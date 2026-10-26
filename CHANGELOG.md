@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the dark GitHub Pages website, an ice-blue identity, subtle background motion and a copyable Agent installation prompt.
+
 - Renamed the project from dotg to **dolegram**: Use ChatGPT Dot in Telegram.
 - Updated the repository, package, portable template, documentation and visual branding.
 - Preserved legacy runtime identifiers and existing installations; see [compatibility notes](docs/rename.md).

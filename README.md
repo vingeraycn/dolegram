@@ -8,6 +8,8 @@ Use ChatGPT Dot in Telegram. Ask a question, send an idea, or pick up a conversa
 
 **v0.1.0 Public Beta.** The core flow has been tested on one installation. Setup requires access to ChatGPT private Tunnels and MCP Events; availability depends on your account. See [release notes](CHANGELOG.md) for verified behavior and current limits.
 
+[Visit the website](https://vingeraycn.github.io/dolegram/)
+
 ## Install with your Agent
 
 ```text
