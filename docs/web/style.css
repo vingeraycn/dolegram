@@ -436,11 +436,17 @@ h2 {
   height: 112px;
 }
 .dot {
-  border: 3px solid #a1daff;
-  box-shadow:
-    0 0 8px #7ccbff60,
-    inset 0 0 12px #7ccbff30,
-    0 0 50px #7ccbff0c;
+  /* Dot's broad, soft silver ring stays distinct from decorative orbits. */
+  background: linear-gradient(135deg, #d1d4e2, #a9aec5 55%, #c1c5d7);
+  position: relative;
+  box-shadow: 0 0 32px #b8bfd514;
+}
+.dot::after {
+  content: "";
+  width: 43%;
+  height: 43%;
+  border-radius: 50%;
+  background: var(--bg);
 }
 .route-line {
   flex: 1;
@@ -828,9 +834,6 @@ h2 {
   .telegram svg {
     width: 30px;
     height: 30px;
-  }
-  .dot {
-    border-width: 2px;
   }
   .route-line {
     margin-bottom: 32px;
