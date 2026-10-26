@@ -35,4 +35,4 @@ No Telegram or Dot messages, Bot credentials, clipboard contents, or installatio
 
 Choose **Disable analytics** in the footer to save an opt-out in this browser and reload without the beacon. Choose **Enable analytics** to reverse it. Only an on/off preference is stored locally by our code. Prior GA4 refusals, Global Privacy Control and Do Not Track are respected; measurement stays off if preference storage is unavailable. Disabling stops measurement on subsequent page loads; a final beacon may be sent while the current page unloads. It does not delete previously collected aggregate reports. Browser blockers are respected.
 
-The former GA4 integration has been removed, and its scoped cookies are cleared on visits to this homepage. Historical Google Analytics reports remain with the site owner. The Bot application itself has no website analytics integration.
+The former GA4 integration has been removed, and its scoped cookies are cleared on visits to this homepage. The former Google Analytics property has been moved to Trash for deletion under Google's recovery and deletion schedule. The Bot application itself has no website analytics integration.
